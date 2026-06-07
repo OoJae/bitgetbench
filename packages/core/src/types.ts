@@ -145,6 +145,61 @@ export interface RunResult {
   journalRoot: string;
 }
 
+// --- Engine (Phase 1) -------------------------------------------------------
+
+/** One closed trade in the trade log. returnPct is pnl relative to margin committed. */
+export interface Trade {
+  entryTs: number;
+  exitTs: number;
+  side: "long" | "short";
+  entry: number;
+  exit: number;
+  /** Base quantity, always positive; sign is carried by `side`. */
+  qty: number;
+  pnlUsd: number;
+  feeUsd: number;
+  returnPct: number;
+}
+
+/** One equity-curve sample, taken at a bar close. */
+export interface EquitySample {
+  timestamp: number;
+  equity: number;
+}
+
+/** Fee model. takerFee is a fraction of notional, e.g. 0.0006 for 0.06%. */
+export interface FeeConfig {
+  takerFee: number;
+}
+
+/** Slippage model. bps is applied adversely to the fill price. */
+export interface SlippageConfig {
+  bps: number;
+}
+
+/** Configuration for one backtest run. */
+export interface EngineConfig {
+  startEquity: number;
+  fees: FeeConfig;
+  slippage: SlippageConfig;
+  /** If set, cap the candles handed to the agent to the most recent N at each step. */
+  contextLookback?: number;
+}
+
+/** The result of one backtest run (Phase 1). RunResult is the Phase 2 aggregate. */
+export interface BacktestRun {
+  agent: string;
+  symbol: string;
+  timeframe: string;
+  startTs: number;
+  endTs: number;
+  startEquity: number;
+  endEquity: number;
+  metrics: Metrics;
+  equityCurve: EquitySample[];
+  trades: Trade[];
+}
+
 /**
  * The single chokepoint against look-ahead bias. Implemented in packages/data.
  * Returns only candles with openTime <= ts, ascending. The replay loop must never

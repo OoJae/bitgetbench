@@ -6,6 +6,7 @@
     { "path": "./packages/guardrail" },
     { "path": "./packages/adapters" },
     { "path": "./packages/cli" },
-    { "path": "./packages/skill" }
+    { "path": "./packages/skill" },
+    { "path": "./reference-agents" }
   ]
 }

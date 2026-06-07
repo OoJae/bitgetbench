@@ -1,0 +1,27 @@
+{
+  "name": "@bitgetbench/reference-agents",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reference BenchAgents: buy-and-hold benchmark and SMA-crossover (no LLM)",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "backtest:smoke": "tsx scripts/backtest-smoke.ts"
+  },
+  "dependencies": {
+    "@bitgetbench/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@bitgetbench/data": "workspace:*"
+  }
+}
