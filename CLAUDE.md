@@ -38,7 +38,7 @@ We submit to the Trading Infra track (Track 2), framed as cross-track infrastruc
 
 - Bitget public candle endpoint, param caps (per-call row limit), and history depth. Best-known: USDT-M futures `GET https://api.bitget.com/api/v2/mix/market/candles` and history `/api/v2/mix/market/history-candles` with `productType=USDT-FUTURES`; params `symbol`, `granularity`, `startTime`, `endTime`, `limit`.
 - Current Bitget USDT-M taker fee. Best-known ~0.06% (6 bps). Store in config, never hard-code in logic.
-- Agent Hub npm package + MCP command + Skill names (needed Phase 2). Brief lists `bitget-hub`, `bitget-mcp-server`, `bitget-skill-hub`, `bgc`. Verify against the live repo README before Phase 2.
+- Agent Hub npm packages + MCP command + Skill names. VERIFIED 2026-06-07 against the live repo (raw README + skill-hub). Packages: `bitget-hub` (installer: `npx bitget-hub upgrade-all --target claude`), `bitget-mcp-server` (`npx -y bitget-mcp-server`), `bitget-client` (CLI binary `bgc`), `bitget-core`, `bitget-skill`, `bitget-skill-hub`. `bgc` returns JSON (`bgc spot spot_get_ticker --symbol BTCUSDT`); `--read-only` disables writes. 5 analyst skills: `macro-analyst`, `market-intel`, `news-briefing`, `sentiment-analyst`, `technical-analysis`. These skills are AI instructions that drive a live market-data MCP, not programmatic JSON APIs, so they are live-only and excluded from leak-free backtests.
 
 ## Monorepo layout
 

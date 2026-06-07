@@ -2,7 +2,7 @@
 // cash and one open position; equity is cash plus mark-to-market unrealized PnL. All
 // sizing and fees flow through here so the engine stays thin. No randomness.
 
-import type { FeeConfig, SlippageConfig, Trade } from "./types.js";
+import type { FeeConfig, SlippageConfig, Trade, Fill } from "./types.js";
 import { fillPrice, takerFeeUsd } from "./fills.js";
 
 interface OpenPosition {
@@ -23,6 +23,7 @@ export class Portfolio {
   private open: OpenPosition | null = null;
   private readonly fees: FeeConfig;
   private readonly slippage: SlippageConfig;
+  private lastFillRec: Fill | null = null;
   readonly trades: Trade[] = [];
 
   constructor(startEquity: number, fees: FeeConfig, slippage: SlippageConfig) {
@@ -33,6 +34,16 @@ export class Portfolio {
 
   get cash(): number {
     return this.cashUsd;
+  }
+
+  /** The most recent fill (open or close), or null. Cleared by resetFill. */
+  get lastFill(): Fill | null {
+    return this.lastFillRec;
+  }
+
+  /** Clear the recorded fill, so the engine can tell whether this step filled. */
+  resetFill(): void {
+    this.lastFillRec = null;
   }
 
   get position(): Readonly<OpenPosition> | null {
@@ -76,6 +87,7 @@ export class Portfolio {
     const qty = notional / price;
     this.cashUsd -= fee;
     this.open = { side, qty, entry: price, leverage, margin, entryFee: fee, entryTs: ts };
+    this.lastFillRec = { price, sizeUsd: notional, feeUsd: fee, slippageBps: this.slippage.bps };
   }
 
   /** Close the open position at a reference price, charging the exit taker fee. */
@@ -103,6 +115,12 @@ export class Portfolio {
       returnPct: pos.margin > 0 ? pnlUsd / pos.margin : 0,
     };
     this.open = null;
+    this.lastFillRec = {
+      price: exit,
+      sizeUsd: pos.qty * exit,
+      feeUsd: exitFee,
+      slippageBps: this.slippage.bps,
+    };
     this.trades.push(trade);
     return trade;
   }

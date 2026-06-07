@@ -4,6 +4,53 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-07 - Phase 2 Block A: rigor + journal
+
+### Summary
+
+Added the rigor and tamper-evidence layers to the engine: leak certificate, hash-chained journal + verify, return decomposition, walk-forward, a documented composite score, and the full benchmarked `RunResult`. Verified Agent Hub package/MCP/Skill names against the live repo (see below). All gates green, 53 tests, and a backtest smoke that emits a clean leak certificate plus a 17,279-entry journal that verifies and breaks under tampering.
+
+### Agent Hub names verified (2026-06-07, live repo raw README + skill-hub)
+
+- Packages: `bitget-hub` (installer), `bitget-mcp-server` (MCP), `bitget-client` (CLI binary `bgc`), `bitget-core`, `bitget-skill`, `bitget-skill-hub`.
+- `bgc` JSON commands, `--read-only` disables writes. 5 analyst skills: macro-analyst, market-intel, news-briefing, sentiment-analyst, technical-analysis.
+- Key finding: the analyst skills are AI instructions that drive a live market-data MCP, NOT programmatic JSON APIs, and serve live data. So they are live-only and excluded from leak-free backtests. CLAUDE.md updated to mark this verified.
+
+### Decisions
+
+- Leak-free backtests exclude live analyst-skill perception (sentiment/macro/news) because it cannot be replayed point-in-time; backtest perception is candle-derived only. Documented in docs/methodology.md as a deliberate rigor stance.
+- Leak certificate computed inline in the replay loop (max context openTime - decisionTs must be <= 0; fill bar strictly later). A run that is not leak-clean scores 0 on the composite (gate, not tunable).
+- Composite score published: 0.5*clamp(sharpe/3) + 0.3*(1 - maxDD) + 0.2\*clamp(totalReturn), gated on leak-clean.
+- Core stays free of any dependency on data and reference-agents: `runBenchmarked` uses an internal buy-and-hold benchmark; annualization uses inferred stepMs.
+
+### What was built (packages/core)
+
+- `leakAudit.ts`: `LeakAuditor` (inline in the engine) + `wrapReaderWithAudit` for external readers.
+- `journal.ts`: `Journal` (hash-chained, sha256 over canonical JSON), `verifyJournal`, `stableStringify`, `GENESIS_HASH`.
+- `decomposition.ts`: OLS `regress` + `decomposeReturns` (alpha, beta, market vs skill return).
+- `walkForward.ts`: N non-overlapping out-of-sample folds + aggregate.
+- `score.ts`: `compositeScore` + published `SCORE_WEIGHTS`.
+- `runBenchmarked.ts`: agent + internal buy-and-hold benchmark + decomposition + leak cert + journal + score -> full `RunResult`.
+- `engine.ts`: now records the leak certificate and hash-chained journal per step (trivial pass-through verdict until GuardRail lands in Block B); `BacktestRun` gained `leakCertificate`, `journal`, `journalRoot`; `RunResult` gained `score`.
+- `portfolio.ts`: captures `lastFill` for the journal.
+- `docs/methodology.md`: point-in-time discipline, leak policy, fees/slippage, metrics, decomposition, walk-forward, composite score, journal, determinism.
+
+### Tests (Vitest), 18 new, 53 total passing
+
+- `journal.test.ts`: chain integrity, tamper detection on any field and on the hash, empty-safe, stableStringify order-independence.
+- `rigor.test.ts`: LeakAuditor clean/violation cases + cheating-reader wrap; regress beta1/alpha0 and flat-agent beta0; decomposition split; compositeScore gating and term weights; walk-forward fold coverage; runBenchmarked RunResult assembly.
+
+### Block A evidence
+
+- typecheck, build, lint (no-em-dash, 71 files), test (53/53), format:check all green.
+- backtest smoke on cached 6-month data:
+  - SMA 20/50: leak clean (0 violations), composite score -0.3609, beta 0.4291, market return -14.54%, skill return -22.51%, benchmark -33.89%, journal 17279 entries, root 4ea298b6...
+  - buy-and-hold reconciles (diff 5.55e-17) PASS, determinism PASS, leak clean PASS, journal verifies PASS, tamper caught PASS.
+
+### Next: Block B (GuardRail) then Block C (Agent Hub adapter + skill-momentum agent + Claude Code skill + bitgetbench CLI).
+
+---
+
 ## 2026-06-07 - Phase 1: backtest engine core (Milestone 1)
 
 ### Summary

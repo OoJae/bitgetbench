@@ -143,6 +143,8 @@ export interface RunResult {
   leakCertificate: LeakCertificate;
   /** Final hash of the journal chain. */
   journalRoot: string;
+  /** Transparent composite ranking score (see packages/core/src/score.ts). */
+  score: number;
 }
 
 // --- Engine (Phase 1) -------------------------------------------------------
@@ -186,7 +188,8 @@ export interface EngineConfig {
   contextLookback?: number;
 }
 
-/** The result of one backtest run (Phase 1). RunResult is the Phase 2 aggregate. */
+/** The result of one backtest run. The leak certificate and hash-chained journal are
+ * produced inline by the replay loop; RunResult is the higher-level benchmarked aggregate. */
 export interface BacktestRun {
   agent: string;
   symbol: string;
@@ -198,6 +201,9 @@ export interface BacktestRun {
   metrics: Metrics;
   equityCurve: EquitySample[];
   trades: Trade[];
+  leakCertificate: LeakCertificate;
+  journal: JournalEntry[];
+  journalRoot: string;
 }
 
 /**

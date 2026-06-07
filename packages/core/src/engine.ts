@@ -10,9 +10,12 @@ import type {
   EngineConfig,
   BacktestRun,
   EquitySample,
+  GuardRailVerdict,
 } from "./types.js";
 import { Portfolio } from "./portfolio.js";
 import { computeMetrics } from "./metrics.js";
+import { LeakAuditor } from "./leakAudit.js";
+import { Journal } from "./journal.js";
 
 export interface RunBacktestParams {
   agent: BenchAgent;
@@ -55,6 +58,8 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
   const equityCurve: EquitySample[] = [
     { timestamp: bars[0]!.openTime, equity: config.startEquity },
   ];
+  const auditor = new LeakAuditor();
+  const journal = new Journal();
   let barsWithPosition = 0;
 
   for (let i = 0; i < bars.length - 1; i += 1) {
@@ -77,25 +82,29 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
     };
 
     const decision = await agent.decide(ctx);
-    const leverage = decision.leverage ?? 1;
+    // Block A applies a trivial pass-through verdict; the GuardRail wires in at Block B.
+    const verdict: GuardRailVerdict = { allowed: decision, blocked: false, reasons: [] };
+    const allowed = verdict.allowed;
+    const leverage = allowed.leverage ?? 1;
     const fillTs = fillBar.openTime;
     const ref = fillBar.open;
 
-    switch (decision.action) {
+    portfolio.resetFill();
+    switch (allowed.action) {
       case "long":
         if (!portfolio.hasPosition()) {
-          portfolio.openPosition("long", ref, decision.sizePct, leverage, fillTs);
+          portfolio.openPosition("long", ref, allowed.sizePct, leverage, fillTs);
         } else if (portfolio.position!.side === "short") {
           portfolio.closePosition(ref, fillTs);
-          portfolio.openPosition("long", ref, decision.sizePct, leverage, fillTs);
+          portfolio.openPosition("long", ref, allowed.sizePct, leverage, fillTs);
         }
         break;
       case "short":
         if (!portfolio.hasPosition()) {
-          portfolio.openPosition("short", ref, decision.sizePct, leverage, fillTs);
+          portfolio.openPosition("short", ref, allowed.sizePct, leverage, fillTs);
         } else if (portfolio.position!.side === "long") {
           portfolio.closePosition(ref, fillTs);
-          portfolio.openPosition("short", ref, decision.sizePct, leverage, fillTs);
+          portfolio.openPosition("short", ref, allowed.sizePct, leverage, fillTs);
         }
         break;
       case "close":
@@ -111,8 +120,12 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
       portfolio.closePosition(fillBar.close, fillTs);
     }
 
+    const equityAfter = portfolio.equity(fillBar.close);
+    auditor.record(candles, decisionTs, fillBar.openTime);
+    journal.append(decisionTs, decision, verdict, portfolio.lastFill, equityAfter);
+
     if (portfolio.hasPosition()) barsWithPosition += 1;
-    equityCurve.push({ timestamp: fillBar.openTime, equity: portfolio.equity(fillBar.close) });
+    equityCurve.push({ timestamp: fillBar.openTime, equity: equityAfter });
   }
 
   // Settle any open position into the trade log (no cash change) so metrics are defined.
@@ -134,5 +147,8 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
     metrics,
     equityCurve,
     trades: portfolio.trades,
+    leakCertificate: auditor.certificate(),
+    journal: [...journal.entries],
+    journalRoot: journal.root,
   };
 }
