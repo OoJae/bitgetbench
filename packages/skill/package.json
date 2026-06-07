@@ -1,0 +1,12 @@
+{
+  "name": "@bitgetbench/skill",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BitgetBench Claude Code skill: SKILL.md + adapter scaffold templates",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}

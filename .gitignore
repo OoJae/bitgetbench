@@ -1,0 +1,25 @@
+# dependencies
+node_modules/
+
+# build output
+dist/
+*.tsbuildinfo
+.next/
+out/
+
+# test
+coverage/
+
+# market data cache (regenerated from Bitget)
+data-cache/
+
+# env and secrets
+.env
+.env.local
+.env.*.local
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

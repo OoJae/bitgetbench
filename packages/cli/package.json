@@ -1,0 +1,27 @@
+{
+  "name": "@bitgetbench/cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "bitgetbench CLI: init, backtest, sim, submit, stats, verify",
+  "license": "MIT",
+  "bin": {
+    "bitgetbench": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@bitgetbench/core": "workspace:*",
+    "@bitgetbench/data": "workspace:*"
+  }
+}

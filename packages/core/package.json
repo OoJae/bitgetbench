@@ -1,0 +1,20 @@
+{
+  "name": "@bitgetbench/core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BitgetBench engine: shared types and (later) replay loop, portfolio, fills, scoring, leak audit, journal",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "@bitgetbench/adapters",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BitgetBench BenchAgent helpers + Bitget Agent Hub perception adapter + reference agents",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@bitgetbench/core": "workspace:*"
+  }
+}

@@ -1,0 +1,11 @@
+dist
+node_modules
+.next
+coverage
+data-cache
+pnpm-lock.yaml
+
+# user-provided source briefs, kept verbatim
+bitgetbench-build-plan.md
+bitgetbench-strategy.md
+bitgetbench-master-prompt.md

@@ -1,0 +1,11 @@
+{
+  "name": "@bitgetbench/db",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BitgetBench Drizzle schema + migrations (Postgres for leaderboard, SQLite for local dev)",
+  "license": "MIT",
+  "scripts": {
+    "build": "echo \"db: schema lands in Phase 3\" && exit 0"
+  }
+}
