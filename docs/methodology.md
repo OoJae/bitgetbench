@@ -44,6 +44,17 @@ score = leakClean
 
 Leak-clean is a gate, not a tunable: a run that is not leak-free scores 0. Sharpe is divided by 3 before clamping, so a Sharpe of 3 saturates that term. The score lands roughly in `[-1, 1]`, higher is better.
 
+## GuardRail (risk middleware)
+
+Every decision passes through a pure, synchronous guardrail before it fills. It is configured by a declarative JSON policy so users tune limits without code:
+
+- `maxPositionPct`, `maxLeverage`, `maxNotionalPct`: clamp the intended size and leverage (and their product) down to the caps. Clamps are recorded with reasons but are not "blocks".
+- Daily-loss circuit breaker (`dailyLossLimitPct`, `breakerCooldownMs`, `halfOpenSizeFactor`): three states. Closed allows trading. It opens when the day PnL falls to the loss limit and blocks all new risk. After the cooldown it moves to half-open, allowing new risk at a reduced size. A new UTC day re-arms it to closed.
+- Drawdown kill-switch (`drawdownKillPct`): terminal. When equity falls this far from its peak, the guardrail forces a close and blocks all new risk for the rest of the run.
+- `symbolAllow` / `symbolDeny`: optional per-symbol gating.
+
+Closing and holding are always allowed (they reduce risk). Every clamp or block produces a human-readable reason, and the verdict is written into the journal entry for that step, so the full risk-control trail is auditable.
+
 ## Tamper-evident journal
 
 Every step appends one immutable entry, hash-chained: `hash = sha256(seq | prevHash | timestamp | decision | verdict | fill | equityAfter)`. The final `journalRoot` summarizes the run. Editing any entry breaks every hash after it; `bitgetbench verify <journal.jsonl>` recomputes the chain and reports the first broken entry.

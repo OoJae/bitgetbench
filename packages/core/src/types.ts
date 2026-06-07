@@ -71,6 +71,18 @@ export interface GuardRailVerdict {
   reasons: string[];
 }
 
+/**
+ * Risk middleware the engine drives each step. Defined here (not in @bitgetbench/guardrail)
+ * so the engine can use it by interface without a dependency cycle: guardrail imports core
+ * types, core never imports guardrail. The implementation lives in @bitgetbench/guardrail.
+ */
+export interface GuardRail {
+  /** Called once per bar with the equity entering the step, before the decision. */
+  onStep(equity: number, ts: number): void;
+  /** Pure given current internal state: clamp or block the decision. */
+  apply(decision: AgentDecision): GuardRailVerdict;
+}
+
 /** A simulated fill. */
 export interface Fill {
   price: number;

@@ -11,6 +11,7 @@ import type {
   BacktestRun,
   EquitySample,
   GuardRailVerdict,
+  GuardRail,
 } from "./types.js";
 import { Portfolio } from "./portfolio.js";
 import { computeMetrics } from "./metrics.js";
@@ -27,6 +28,8 @@ export interface RunBacktestParams {
   /** Inclusive window end (epoch ms). */
   endTs: number;
   config: EngineConfig;
+  /** Optional risk middleware applied between the decision and the fill. */
+  guardrail?: GuardRail;
 }
 
 function toPublicPosition(p: Portfolio): Position | null {
@@ -81,9 +84,12 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
       equity: portfolio.equity(bar.close),
     };
 
+    // Update guardrail state with the equity entering this step, then decide and screen.
+    params.guardrail?.onStep(portfolio.equity(bar.close), decisionTs);
     const decision = await agent.decide(ctx);
-    // Block A applies a trivial pass-through verdict; the GuardRail wires in at Block B.
-    const verdict: GuardRailVerdict = { allowed: decision, blocked: false, reasons: [] };
+    const verdict: GuardRailVerdict = params.guardrail
+      ? params.guardrail.apply(decision)
+      : { allowed: decision, blocked: false, reasons: [] };
     const allowed = verdict.allowed;
     const leverage = allowed.leverage ?? 1;
     const fillTs = fillBar.openTime;

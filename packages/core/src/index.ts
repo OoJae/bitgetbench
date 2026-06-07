@@ -8,6 +8,7 @@ export type {
   AgentDecision,
   BenchAgent,
   GuardRailVerdict,
+  GuardRail,
   Fill,
   JournalEntry,
   Metrics,

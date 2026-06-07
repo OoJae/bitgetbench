@@ -1,4 +1,9 @@
-// @bitgetbench/guardrail (Phase 2). Risk middleware:
-// applyGuardRail(decision, state, policy) -> GuardRailVerdict. Pure and synchronous.
-// Placeholder export so the package builds in Phase 0.
-export const GUARDRAIL_PLACEHOLDER = true;
+// @bitgetbench/guardrail: declarative risk middleware. Position/leverage/notional caps,
+// a three-state daily-loss circuit breaker, and a drawdown kill-switch, driven by the
+// engine via the core GuardRail interface.
+
+export { type GuardRailPolicy, DEFAULT_POLICY, validatePolicy } from "./policy.js";
+
+export { type GuardRailState, type BreakerState, initState, updateState } from "./state.js";
+
+export { applyGuardRail, PolicyGuardRail } from "./guardrail.js";
