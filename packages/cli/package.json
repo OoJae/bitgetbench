@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@bitgetbench/core": "workspace:*",
-    "@bitgetbench/data": "workspace:*"
+    "@bitgetbench/data": "workspace:*",
+    "commander": "^12.1.0"
   }
 }

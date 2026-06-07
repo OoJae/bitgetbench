@@ -23,7 +23,7 @@ import {
   DEFAULT_MARKET,
   type CacheKey,
 } from "@bitgetbench/data";
-import { BuyAndHoldAgent, SmaCrossoverAgent } from "../src/index.js";
+import { BuyAndHoldAgent, SmaCrossoverAgent, SkillMomentumAgent } from "../src/index.js";
 
 const KEY: CacheKey = { market: DEFAULT_MARKET, symbol: "BTCUSDT", timeframe: "15m" };
 const START_EQUITY = 10_000;
@@ -100,6 +100,22 @@ async function main(): Promise<void> {
   console.log(`  journal root:      ${result.journalRoot}`);
   console.log(`  journal entries:   ${agentRun.journal.length}`);
 
+  // Skill-momentum: a deterministic agent over Agent-Hub-style technical perception.
+  const skill = await runBenchmarked({
+    ...common,
+    agent: new SkillMomentumAgent(),
+    config: {
+      startEquity: START_EQUITY,
+      fees: { takerFee: DEFAULT_TAKER_FEE },
+      slippage: { bps: 1 },
+      contextLookback: 200,
+    },
+  });
+  printMetrics("Skill momentum", skill.agentRun);
+  console.log(
+    `  composite score:   ${skill.result.score.toFixed(4)} | beta ${skill.result.decomposition.beta.toFixed(3)} | skill return ${(skill.result.decomposition.skillReturn * 100).toFixed(2)}%`,
+  );
+
   // (1) Reconciliation: buy-and-hold totalReturn == assetReturn - takerFee.
   const candles = readCachedCandles(KEY).filter(
     (c) => c.openTime >= startTs && c.openTime <= endTs,
@@ -115,7 +131,10 @@ async function main(): Promise<void> {
   const detOk = JSON.stringify(buyHold.equityCurve) === JSON.stringify(buyHold2.equityCurve);
 
   // (3) Leak-free + journal verify, and a tamper that breaks the chain.
-  const leakOk = agentRun.leakCertificate.clean && agentRun.leakCertificate.violations === 0;
+  const leakOk =
+    agentRun.leakCertificate.clean &&
+    agentRun.leakCertificate.violations === 0 &&
+    skill.agentRun.leakCertificate.clean;
   const verifyOk = verifyJournal(agentRun.journal).ok;
   const tampered: JournalEntry[] = agentRun.journal.map((e) => ({ ...e }));
   const mid = Math.floor(tampered.length / 2);

@@ -4,6 +4,48 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-07 - Phase 2 Blocks B + C: GuardRail, Agent Hub adapter, skill, CLI (Milestone 2)
+
+### Summary
+
+Completed Phase 2. GuardRail middleware (Block B) and the Agent Hub integration layer + Claude Code skill + `bitgetbench` CLI (Block C) are in. Milestone 2 is met: an agent is benchmarked end to end with a clean leak certificate, passes through guardrails, and writes a verifiable journal, and a stranger can integrate from the README in three commands.
+
+### Block B: GuardRail (packages/guardrail)
+
+- `policy.ts`: declarative `GuardRailPolicy` (position/leverage/notional caps, daily-loss limit, breaker cooldown + half-open factor, drawdown kill, symbol allow/deny) + `DEFAULT_POLICY` + `validatePolicy`.
+- `state.ts`: `GuardRailState` + pure `updateState` (UTC day roll, equity peak, kill-switch, three-state breaker closed -> open -> half-open).
+- `guardrail.ts`: pure `applyGuardRail` + stateful `PolicyGuardRail` implementing the core `GuardRail` interface.
+- Engine integration: `runBacktest` gained an optional `guardrail`; it calls `onStep(equity, ts)` then `apply(decision)` between the decision and the fill, sizing from `verdict.allowed` and recording the verdict in the journal. A `GuardRail` interface was added to core so the engine uses it without a core -> guardrail cycle.
+- Tests: clamping, notional cap, breaker open/half-open/re-arm, kill-switch terminal force-close, symbol gating, and an in-engine integration test (aggressive 10x agent clamped to 3x, clamp recorded in the journal).
+
+### Block C: Agent Hub adapter, reference agent, skill, CLI
+
+- `packages/adapters`: `indicators.ts` (point-in-time SMA/EMA/RSI/MACD/ATR/momentum + `technicalFeatures` snapshot, leak-safe) and `bitgetHub.ts` (`BitgetHubClient`, a read-only `bgc` wrapper for LIVE perception that degrades gracefully when bgc is absent).
+- `reference-agents/src/skillMomentum.ts`: `SkillMomentumAgent`, a deterministic agent over `technicalFeatures` (MACD/momentum/RSI). Proves the Agent-Hub-style integration while staying leak-free.
+- `packages/skill/SKILL.md`: the Claude Code skill ("integrate my agent with BitgetBench") with the contract, steps, and the rules that keep results trustworthy.
+- `packages/cli`: the `bitgetbench` binary (commander). `init` (scaffold a plain-ESM agent + config + readme, no build step), `backtest --config [--journal]` (dynamic-import the agent, run `runBenchmarked` on the cache, print the full RunResult JSON), `verify <journal.jsonl>` (recompute the hash chain). Implementations in `index.ts`, wiring in `bin.ts`.
+- `README.md`: a 60-second integrate path. `docs/methodology.md`: added the GuardRail section.
+
+### Decisions
+
+- The skill-driven reference agent is deterministic over candle-derived technical features, not LLM-in-loop, so it produces a clean leak certificate over 17k bars reproducibly (rule 5). LLM-in-loop is a live-sandbox roadmap item.
+- The scaffolded agent is plain ESM JavaScript so a contestant goes zero-to-backtest with no TypeScript toolchain.
+- CLI `backtest` dynamic-imports the agent module (default or `agent` export, or a factory).
+
+### Tests (Vitest), 26 new this phase, 79 total passing
+
+- guardrail.test.ts (9), engineIntegration.test.ts (1), indicators.test.ts (12), cli.test.ts (4) added to the Block A suite.
+
+### Milestone 2 evidence
+
+- typecheck, build, lint (no-em-dash, 84 files), test (79/79), format:check all green.
+- End-to-end CLI demo (built binary, temp dir, real cache): `init` scaffolded 3 files; `backtest` produced leakCertificate { clean: true, checkedSteps 17279, violations 0 }, benchmark + decomposition (beta 0.216) + composite score, journalRoot 5fa7fed1...; `verify` returned ok on the intact 17279-entry journal and `{ ok: false, brokenAt: 5000 }` (exit 1) after tampering one entry.
+- Reference-agent smoke: buy-and-hold, SMA 20/50, and skill-momentum all leak-clean. Skill-momentum at 2x overtraded (1014 trades) and lost 78.8% in the down market, reported honestly with composite score -0.60. SMA decomposition: beta 0.43, skill return -22.5%.
+
+### Next: Phase 3 (leaderboard + live sandbox + telemetry), proposed below.
+
+---
+
 ## 2026-06-07 - Phase 2 Block A: rigor + journal
 
 ### Summary

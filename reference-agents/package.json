@@ -19,7 +19,8 @@
     "backtest:smoke": "tsx scripts/backtest-smoke.ts"
   },
   "dependencies": {
-    "@bitgetbench/core": "workspace:*"
+    "@bitgetbench/core": "workspace:*",
+    "@bitgetbench/adapters": "workspace:*"
   },
   "devDependencies": {
     "@bitgetbench/data": "workspace:*"

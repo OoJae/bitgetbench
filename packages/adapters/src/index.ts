@@ -1,4 +1,17 @@
-// @bitgetbench/adapters (Phase 2). BenchAgent helpers, the Bitget Agent Hub perception
-// adapter, and reference agents (SMA-crossover, Skill-driven momentum).
-// Placeholder export so the package builds in Phase 0.
-export const ADAPTERS_PLACEHOLDER = true;
+// @bitgetbench/adapters: helpers for building BenchAgents on the Bitget Agent Hub.
+// - indicators: point-in-time technical features safe for leak-free backtests
+// - BitgetHubClient: live bgc market-data perception for the paper-sandbox (read-only)
+export {
+  sma,
+  ema,
+  emaSeries,
+  rsi,
+  macd,
+  atr,
+  momentum,
+  technicalFeatures,
+  type Macd,
+  type TechnicalSnapshot,
+} from "./indicators.js";
+
+export { BitgetHubClient, type BgcResult, type BitgetHubClientOptions } from "./bitgetHub.js";

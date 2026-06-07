@@ -61,6 +61,9 @@ importers:
       '@bitgetbench/data':
         specifier: workspace:*
         version: link:../data
+      commander:
+        specifier: ^12.1.0
+        version: 12.1.0
 
   packages/core: {}
 
@@ -80,6 +83,9 @@ importers:
 
   reference-agents:
     dependencies:
+      '@bitgetbench/adapters':
+        specifier: workspace:*
+        version: link:../packages/adapters
       '@bitgetbench/core':
         specifier: workspace:*
         version: link:../packages/core
@@ -744,6 +750,10 @@ packages:
 
   color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
+
+  commander@12.1.0:
+    resolution: {integrity: sha512-Vw8qHK3bZM9y/P10u3Vib8o/DdkvA2OtPtZvD871QKjy74Wj1WSKFILMPRPSdUSx5RFK1arlJzEtA4PkFgnbuA==}
+    engines: {node: '>=18'}
 
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -1694,6 +1704,8 @@ snapshots:
       color-name: 1.1.4
 
   color-name@1.1.4: {}
+
+  commander@12.1.0: {}
 
   concat-map@0.0.1: {}
 
