@@ -10,7 +10,8 @@
   },
   "packageManager": "pnpm@11.1.2",
   "scripts": {
-    "build": "pnpm -r build",
+    "build": "pnpm -r --filter=!@bitgetbench/leaderboard build",
+    "build:web": "pnpm --filter @bitgetbench/leaderboard build",
     "typecheck": "tsc -b",
     "lint": "pnpm run check:no-em-dash && eslint .",
     "format": "prettier --write .",
