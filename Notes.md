@@ -4,6 +4,47 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-09 - Phase 3: persistence, leaderboard, live sandbox, deploy (Milestone 3)
+
+### Summary
+
+Made BitgetBench public and live. Persistence + telemetry (Block D), the Next.js leaderboard (Block E), and the live paper-sandbox + VPS deploy (Block F) are all in. Milestone 3 is met: a public leaderboard is live at http://43.153.109.3/ with multiple real agents and incrementing counters, and the sandbox runs unattended on a 15-minute cron with a heartbeat.
+
+### Decisions
+
+- Database: pivoted from Drizzle + better-sqlite3 to Node's built-in `node:sqlite` with raw parameterized SQL. better-sqlite3's native addon does not build against the current Node (26); the built-in driver is zero-dependency and works everywhere. Loaded via `createRequire` so Vite/Vitest do not choke on the new builtin. DDL is a mechanical Postgres port. CLAUDE.md updated.
+- Hosting: the VPS (Sonar-VPS, 43.153.109.3, Ubuntu 24.04) hosts both the leaderboard (Next.js via `next start` on localhost:3939 behind nginx) and the sandbox cron. No Vercel handoff.
+- Non-destructive deploy: the VPS already runs other services (ports 80/443/3000 in use, an nginx `sonar` site). The leaderboard binds localhost:3939 (3000 was taken) and nginx serves it on the bare IP only via an IP-scoped server block (no default_server), leaving the host's `sonar.my.id` vhost untouched. The bare IP on port 80 now serves BitgetBench.
+- Sandbox model: the cut-scope-ladder "scheduled backtest re-runs" sandbox. Each cycle syncs newly closed candles into the cache and re-runs the three reference agents over the live-updated window, upserting their sandbox rows. Deterministic and unattended.
+- Telemetry honesty: cumulative counters (backtests run, sandbox cycles, api calls) come from a telemetry_events table; distinct users = distinct anonymous client ids (a random UUID at ~/.bitgetbench/client-id, no PII); sim trades = sum of trades across sandbox runs; agents registered = distinct agent names on the board.
+
+### What was built
+
+- Block D (db + cli): `db/` on node:sqlite (WAL) with runs, trades, telemetry_events, heartbeats; ingest/query helpers (insertRun upserts sandbox runs under a stable id, equity downsampled to 500 points); CLI `backtest --submit`, `stats`, `seed`. 5 db tests.
+- Block E (apps/leaderboard): Next.js 15 App Router + Tailwind + Recharts reading the DB in dynamic server components. Pages: `/` (ranking + live counters + heartbeat dot + leak-free badges), `/run/[id]` (equity + drawdown charts, full metrics, benchmark, alpha/beta, journal root + verify, trades), `/about` (methodology), `/api/stats`.
+- Block F (poller + sandbox + deploy): `syncRecentCandles` live poller (3 tests); `bitgetbench sandbox` cycle (sync, re-run agents, upsert sandbox rows, heartbeat, optional Telegram alert); `deploy/` (systemd unit, start-web launcher on :3939, IP-scoped nginx proxy, idempotent provision.sh). Provisioned the VPS: installed Node 24 + pnpm, built, seeded, wired the service + nginx + cron.
+
+### Milestone 3 evidence
+
+- Gates green: typecheck, build, lint (no-em-dash, 110 files), test (87/87), format:check.
+- Public: `curl http://43.153.109.3/` returns 200 (Next.js); `/api/stats` returns leaderboardSize 6, sandboxCycles incrementing, simTrades ~1238, a fresh ok heartbeat. The board renders 6 runs (3 backtest + 3 sandbox, "live" tag) with leak-free badges.
+- Unattended: systemd `bitgetbench-web` enabled + active; cron `*/15 * * * * bitgetbench sandbox` installed; sandbox log writing.
+
+### Notes / follow-ups
+
+- The bare IP (port 80) now serves BitgetBench; the host's `sonar.my.id` domain still routes to the existing `sonar` app. To revert, remove `/etc/nginx/sites-enabled/bitgetbench` and reload nginx.
+- No TLS on the IP (the demo uses http). A domain + certbot would add https.
+- Updates: rsync the repo to /opt/bitgetbench and re-run `deploy/provision.sh`.
+
+### Distribution materials (for the user to post; Track 2 evidence)
+
+- One-liner: "BitgetBench: benchmark your Bitget Agent Hub trading agent honestly. Leak-free backtests, risk guardrails, a tamper-evident journal, and a public leaderboard. Free and open source. Integrate in 3 commands." Link http://43.153.109.3/
+- Demo script (under 60s): open the leaderboard, point at the live counters + heartbeat, open a run detail (equity/drawdown + leak-free badge + journal root), then `bitgetbench init && bitgetbench backtest --config bitgetbench.config.json --submit` to show a new entry appear.
+
+### Next: Phase 4 (demo polish, sustainability slide, <=3 min video, submission package). Proposed below.
+
+---
+
 ## 2026-06-07 - Phase 2 Blocks B + C: GuardRail, Agent Hub adapter, skill, CLI (Milestone 2)
 
 ### Summary

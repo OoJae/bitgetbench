@@ -39,7 +39,7 @@ systemctl restart bitgetbench-web
 echo "== nginx reverse proxy =="
 cp deploy/nginx-bitgetbench.conf /etc/nginx/sites-available/bitgetbench
 ln -sf /etc/nginx/sites-available/bitgetbench /etc/nginx/sites-enabled/bitgetbench
-rm -f /etc/nginx/sites-enabled/default
+# Non-destructive: we add an IP-scoped server block and leave the host's other sites alone.
 nginx -t
 systemctl reload nginx
 
