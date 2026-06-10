@@ -45,7 +45,11 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.20)
 
-  db: {}
+  db:
+    dependencies:
+      '@bitgetbench/core':
+        specifier: workspace:*
+        version: link:../packages/core
 
   packages/adapters:
     dependencies:
@@ -61,6 +65,12 @@ importers:
       '@bitgetbench/data':
         specifier: workspace:*
         version: link:../data
+      '@bitgetbench/db':
+        specifier: workspace:*
+        version: link:../../db
+      '@bitgetbench/reference-agents':
+        specifier: workspace:*
+        version: link:../../reference-agents
       commander:
         specifier: ^12.1.0
         version: 12.1.0

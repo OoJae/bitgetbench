@@ -4,9 +4,24 @@
 import { existsSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { BenchAgent, EngineConfig, RunResult } from "@bitgetbench/core";
+import type { BenchAgent, EngineConfig, RunResult, BacktestRun } from "@bitgetbench/core";
 import { runBenchmarked, verifyJournal, type JournalEntry } from "@bitgetbench/core";
-import { readerFromCache, readManifest, type CacheKey } from "@bitgetbench/data";
+import { readerFromCache, readManifest, DEFAULT_MARKET, type CacheKey } from "@bitgetbench/data";
+import {
+  getDb,
+  insertRun,
+  recordEvent,
+  getStats,
+  getClientId,
+  defaultDbPath,
+  type RunMode,
+  type Stats,
+} from "@bitgetbench/db";
+import {
+  BuyAndHoldAgent,
+  SmaCrossoverAgent,
+  SkillMomentumAgent,
+} from "@bitgetbench/reference-agents";
 import { AGENT_TEMPLATE, CONFIG_TEMPLATE, README_SNIPPET } from "./templates.js";
 
 export interface BacktestConfig {
@@ -60,12 +75,37 @@ async function loadAgent(modulePath: string): Promise<BenchAgent> {
 export interface BacktestOutcome {
   result: RunResult;
   journalPath?: string;
+  runId?: string;
+}
+
+/** Persist a benchmarked run and record telemetry. Returns the run id. */
+export function submitRun(
+  dbPath: string,
+  result: RunResult,
+  agentRun: BacktestRun,
+  mode: RunMode,
+  label: "reference" | "external",
+  clientId: string,
+): string {
+  const db = getDb(dbPath);
+  const id = insertRun(db, {
+    result,
+    equityCurve: agentRun.equityCurve,
+    trades: agentRun.trades,
+    mode,
+    clientId,
+    label,
+  });
+  recordEvent(db, mode === "sandbox" ? "sandbox_cycle" : "backtest_run", clientId, {
+    agent: result.agent,
+  });
+  return id;
 }
 
 /** Run a leak-audited, benchmarked backtest from a config file. */
 export async function runBacktestCommand(
   configPath: string,
-  opts: { journalOut?: string } = {},
+  opts: { journalOut?: string; submit?: boolean; dbPath?: string } = {},
 ): Promise<BacktestOutcome> {
   const absConfig = resolve(configPath);
   const config = JSON.parse(readFileSync(absConfig, "utf8")) as BacktestConfig;
@@ -112,7 +152,60 @@ export async function runBacktestCommand(
     writeFileSync(resolve(opts.journalOut), jsonl, "utf8");
     outcome.journalPath = resolve(opts.journalOut);
   }
+  if (opts.submit) {
+    const dbPath = opts.dbPath ?? defaultDbPath();
+    outcome.runId = submitRun(dbPath, result, agentRun, "backtest", "external", getClientId());
+  }
   return outcome;
+}
+
+/** Print telemetry counters from the database. */
+export function statsCommand(dbPath?: string): Stats {
+  const db = getDb(dbPath ?? defaultDbPath());
+  recordEvent(db, "api_call", getClientId(), { cmd: "stats" });
+  return getStats(db);
+}
+
+export interface SeedOutcome {
+  seeded: Array<{ agent: string; runId: string; score: number }>;
+}
+
+/** Run the three reference agents over the cached BTCUSDT 15m data and submit them. */
+export async function seedCommand(dbPath?: string): Promise<SeedOutcome> {
+  const key: CacheKey = { market: DEFAULT_MARKET, symbol: "BTCUSDT", timeframe: "15m" };
+  const manifest = readManifest(key);
+  if (!manifest || manifest.firstOpenTime === null || manifest.lastOpenTime === null) {
+    throw new Error("No cached candles for BTCUSDT 15m. Fetch them first.");
+  }
+  const reader = readerFromCache(key);
+  const path = dbPath ?? defaultDbPath();
+  const clientId = getClientId();
+  const common = {
+    reader,
+    symbol: "BTCUSDT",
+    timeframe: "15m",
+    startTs: manifest.firstOpenTime,
+    endTs: manifest.lastOpenTime,
+  };
+  const config: EngineConfig = {
+    startEquity: 10_000,
+    fees: { takerFee: 0.0006 },
+    slippage: { bps: 1 },
+    contextLookback: 200,
+  };
+
+  const agents: BenchAgent[] = [
+    new BuyAndHoldAgent(),
+    new SmaCrossoverAgent({ fast: 20, slow: 50 }),
+    new SkillMomentumAgent(),
+  ];
+  const seeded: SeedOutcome["seeded"] = [];
+  for (const agent of agents) {
+    const { result, agentRun } = await runBenchmarked({ ...common, agent, config });
+    const runId = submitRun(path, result, agentRun, "backtest", "reference", clientId);
+    seeded.push({ agent: result.agent, runId, score: result.score });
+  }
+  return { seeded };
 }
 
 export interface VerifyOutcome {

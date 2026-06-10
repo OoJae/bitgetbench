@@ -23,7 +23,7 @@ We submit to the Trading Infra track (Track 2), framed as cross-track infrastruc
 - Monorepo: pnpm workspaces.
 - Language: TypeScript, strict mode. ESLint + Prettier. Vitest for tests, including property tests for the point-in-time reader.
 - Leaderboard: Next.js 15 (App Router) + Tailwind + shadcn/ui + Recharts, deployed on Vercel.
-- Database: Postgres (Neon or Supabase) via Drizzle ORM, with the same Drizzle schema runnable on SQLite for zero-setup local dev.
+- Database: SQLite for v1 via Node's built-in `node:sqlite` (raw parameterized SQL in `db/`), WAL mode so the sandbox cron writes while the leaderboard reads. Drizzle + better-sqlite3 was the original plan but its native addon does not build against the current Node, so we use the zero-dependency built-in driver. The DDL is a mechanical port to Postgres (Neon or Supabase) when we scale; that is the only swap.
 - CLI: a `bitgetbench` binary (commander), JSON output to match the Bitget `bgc` convention.
 - Market data: Bitget public REST candles (no auth). Cache locally (ndjson + manifest) and in Postgres. Candles are immutable once closed; only append.
 - Scheduling: cron on a Tencent Cloud VPS for the live paper-sandbox loop and leaderboard refresh.

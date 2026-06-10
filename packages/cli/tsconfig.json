@@ -4,7 +4,12 @@
     "rootDir": "./src",
     "outDir": "./dist"
   },
-  "references": [{ "path": "../core" }, { "path": "../data" }],
+  "references": [
+    { "path": "../core" },
+    { "path": "../data" },
+    { "path": "../../db" },
+    { "path": "../../reference-agents" }
+  ],
   "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules", "**/*.test.ts"]
 }

@@ -3,9 +3,21 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "BitgetBench Drizzle schema + migrations (Postgres for leaderboard, SQLite for local dev)",
+  "description": "BitgetBench persistence: runs, trades, telemetry, heartbeats on built-in node:sqlite (Postgres-ready)",
   "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "build": "echo \"db: schema lands in Phase 3\" && exit 0"
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@bitgetbench/core": "workspace:*"
   }
 }
