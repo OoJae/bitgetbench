@@ -6,11 +6,18 @@ import { resolve, dirname, join, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { BenchAgent, EngineConfig, RunResult, BacktestRun } from "@bitgetbench/core";
 import { runBenchmarked, verifyJournal, type JournalEntry } from "@bitgetbench/core";
-import { readerFromCache, readManifest, DEFAULT_MARKET, type CacheKey } from "@bitgetbench/data";
+import {
+  readerFromCache,
+  readManifest,
+  syncRecentCandles,
+  DEFAULT_MARKET,
+  type CacheKey,
+} from "@bitgetbench/data";
 import {
   getDb,
   insertRun,
   recordEvent,
+  recordHeartbeat,
   getStats,
   getClientId,
   defaultDbPath,
@@ -206,6 +213,83 @@ export async function seedCommand(dbPath?: string): Promise<SeedOutcome> {
     seeded.push({ agent: result.agent, runId, score: result.score });
   }
   return { seeded };
+}
+
+/** Best-effort Telegram alert; no-op unless both env vars are set. */
+async function notifyTelegram(text: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  const chat = process.env.TELEGRAM_CHAT_ID;
+  if (!token || !chat) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chat_id: chat, text }),
+    });
+  } catch {
+    // Best effort: a failed alert must not crash the cycle.
+  }
+}
+
+export interface SandboxOutcome {
+  appended: number;
+  rows: number;
+  runs: Array<{ agent: string; runId: string; score: number; endEquity: number }>;
+  latencyMs: number;
+}
+
+/**
+ * One live paper-sandbox cycle: pull newly closed candles into the cache, re-run the
+ * reference agents over the live-updated window, upsert their sandbox rows, and record a
+ * heartbeat. On failure it records the failure and sends a Telegram alert if configured.
+ */
+export async function sandboxCommand(dbPath?: string): Promise<SandboxOutcome> {
+  const path = dbPath ?? defaultDbPath();
+  const db = getDb(path);
+  const clientId = getClientId();
+  const key: CacheKey = { market: DEFAULT_MARKET, symbol: "BTCUSDT", timeframe: "15m" };
+  const t0 = Date.now();
+  try {
+    const sync = await syncRecentCandles({ symbol: "BTCUSDT", timeframe: "15m" });
+    const manifest = readManifest(key);
+    if (!manifest || manifest.firstOpenTime === null || manifest.lastOpenTime === null) {
+      throw new Error("No cached candles after sync");
+    }
+    const reader = readerFromCache(key);
+    const common = {
+      reader,
+      symbol: "BTCUSDT",
+      timeframe: "15m",
+      startTs: manifest.firstOpenTime,
+      endTs: manifest.lastOpenTime,
+    };
+    const config: EngineConfig = {
+      startEquity: 10_000,
+      fees: { takerFee: 0.0006 },
+      slippage: { bps: 1 },
+      contextLookback: 200,
+    };
+    const agents: BenchAgent[] = [
+      new BuyAndHoldAgent(),
+      new SmaCrossoverAgent({ fast: 20, slow: 50 }),
+      new SkillMomentumAgent(),
+    ];
+    const runs: SandboxOutcome["runs"] = [];
+    for (const agent of agents) {
+      const { result, agentRun } = await runBenchmarked({ ...common, agent, config });
+      const runId = submitRun(path, result, agentRun, "sandbox", "reference", clientId);
+      runs.push({ agent: result.agent, runId, score: result.score, endEquity: result.endEquity });
+    }
+    recordEvent(db, "sandbox_cycle", clientId, { appended: sync.appended });
+    const latencyMs = Date.now() - t0;
+    recordHeartbeat(db, true, latencyMs, `appended ${sync.appended}, rows ${sync.rows}`);
+    return { appended: sync.appended, rows: sync.rows, runs, latencyMs };
+  } catch (err) {
+    const latencyMs = Date.now() - t0;
+    recordHeartbeat(db, false, latencyMs, (err as Error).message);
+    await notifyTelegram(`BitgetBench sandbox cycle failed: ${(err as Error).message}`);
+    throw err;
+  }
 }
 
 export interface VerifyOutcome {

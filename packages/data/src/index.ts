@@ -29,6 +29,6 @@ export { findGaps, type Gap } from "./gaps.js";
 
 export { fetchAndCacheRange, DEFAULT_MARKET, type FetchAndCacheParams } from "./dataset.js";
 
-export { type LivePoller } from "./poller.js";
+export { syncRecentCandles, type LivePoller, type SyncParams, type SyncResult } from "./poller.js";
 
 export { timeframeToMs, toBitgetGranularity, supportedTimeframes, alignDown } from "./timeframe.js";

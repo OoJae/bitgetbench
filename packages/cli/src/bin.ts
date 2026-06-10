@@ -8,6 +8,7 @@ import {
   verifyCommand,
   statsCommand,
   seedCommand,
+  sandboxCommand,
 } from "./index.js";
 
 const program = new Command();
@@ -66,6 +67,20 @@ program
   .action(async (opts: { db?: string }) => {
     try {
       const outcome = await seedCommand(opts.db);
+      console.log(JSON.stringify({ ok: true, ...outcome }, null, 2));
+    } catch (err) {
+      console.error(JSON.stringify({ ok: false, error: (err as Error).message }));
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("sandbox")
+  .description("Run one live paper-sandbox cycle: sync candles, re-run agents, record heartbeat")
+  .option("--db <path>", "database path (defaults to data-cache/bitgetbench.db)")
+  .action(async (opts: { db?: string }) => {
+    try {
+      const outcome = await sandboxCommand(opts.db);
       console.log(JSON.stringify({ ok: true, ...outcome }, null, 2));
     } catch (err) {
       console.error(JSON.stringify({ ok: false, error: (err as Error).message }));
