@@ -4,6 +4,7 @@ After=network.target
 
 [Service]
 Type=simple
+EnvironmentFile=-/opt/bitgetbench/deploy/.env
 ExecStart=/opt/bitgetbench/deploy/start-web.sh
 Restart=always
 RestartSec=5

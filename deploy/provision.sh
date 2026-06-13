@@ -5,8 +5,17 @@
 set -euo pipefail
 
 APP_DIR=/opt/bitgetbench
-DB="$APP_DIR/data-cache/bitgetbench.db"
 cd "$APP_DIR"
+
+# Optional config (gitignored). BENCH_SERVER_NAME scopes the nginx vhost; NEXT_PUBLIC_SITE_URL
+# is baked into the web build for the QR/share link; BITGETBENCH_DB is the shared database.
+if [ -f deploy/.env ]; then
+  set -a
+  . deploy/.env
+  set +a
+fi
+DB="${BITGETBENCH_DB:-$APP_DIR/data-cache/bitgetbench.db}"
+BENCH_SERVER_NAME="${BENCH_SERVER_NAME:-_}"
 
 echo "== Node + pnpm =="
 if ! command -v node >/dev/null 2>&1; then
@@ -22,7 +31,8 @@ pnpm -v
 echo "== install + build =="
 pnpm install
 pnpm build
-pnpm build:web
+# NEXT_PUBLIC_SITE_URL (if set in deploy/.env) is inlined into the web build for the QR.
+NEXT_PUBLIC_SITE_URL="${NEXT_PUBLIC_SITE_URL:-}" pnpm build:web
 
 echo "== seed board if empty =="
 if [ ! -f "$DB" ]; then
@@ -37,9 +47,11 @@ systemctl enable bitgetbench-web
 systemctl restart bitgetbench-web
 
 echo "== nginx reverse proxy =="
-cp deploy/nginx-bitgetbench.conf /etc/nginx/sites-available/bitgetbench
+sed "s/__BENCH_SERVER_NAME__/${BENCH_SERVER_NAME}/" deploy/nginx-bitgetbench.conf \
+  > /etc/nginx/sites-available/bitgetbench
 ln -sf /etc/nginx/sites-available/bitgetbench /etc/nginx/sites-enabled/bitgetbench
-# Non-destructive: we add an IP-scoped server block and leave the host's other sites alone.
+# Non-destructive: we add a server block scoped to BENCH_SERVER_NAME and leave the host's
+# other sites alone.
 nginx -t
 systemctl reload nginx
 

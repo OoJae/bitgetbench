@@ -4,6 +4,13 @@ The leaderboard and the live paper-sandbox run on a single VPS (Ubuntu). The lea
 Next.js app served by `next start` behind nginx; the sandbox is a 15-minute cron that syncs
 new candles, re-runs the reference agents, and updates the shared SQLite database.
 
+## Config
+
+Copy `deploy/.env.example` to `deploy/.env` on the VPS (gitignored) and set `BENCH_SERVER_NAME`
+(the IP or domain for the nginx vhost), optionally `NEXT_PUBLIC_SITE_URL` (baked into the web
+build for the QR/share link), and `BITGETBENCH_DB`. `provision.sh` and the systemd service read
+it; the repo never contains the host address.
+
 ## One-time
 
 From the repo root, rsync the source to the VPS (excluding build output and node_modules),

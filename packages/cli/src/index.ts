@@ -28,8 +28,21 @@ import {
   BuyAndHoldAgent,
   SmaCrossoverAgent,
   SkillMomentumAgent,
+  RsiReversionAgent,
+  BreakoutAgent,
 } from "@bitgetbench/reference-agents";
 import { AGENT_TEMPLATE, CONFIG_TEMPLATE, README_SNIPPET } from "./templates.js";
+
+/** The reference agents seeded onto the board and run by the live sandbox. */
+function referenceAgents(): BenchAgent[] {
+  return [
+    new BuyAndHoldAgent(),
+    new SmaCrossoverAgent({ fast: 20, slow: 50 }),
+    new SkillMomentumAgent(),
+    new RsiReversionAgent(),
+    new BreakoutAgent(),
+  ];
+}
 
 export interface BacktestConfig {
   symbol: string;
@@ -93,20 +106,21 @@ export function submitRun(
   mode: RunMode,
   label: "reference" | "external",
   clientId: string,
+  id?: string,
 ): string {
   const db = getDb(dbPath);
-  const id = insertRun(db, {
+  const runId = insertRun(db, {
     result,
     equityCurve: agentRun.equityCurve,
     trades: agentRun.trades,
     mode,
     clientId,
     label,
+    ...(id ? { id } : {}),
   });
-  recordEvent(db, mode === "sandbox" ? "sandbox_cycle" : "backtest_run", clientId, {
-    agent: result.agent,
-  });
-  return id;
+  // Backtests count per run; sandbox cycles are counted once per cycle by sandboxCommand.
+  if (mode === "backtest") recordEvent(db, "backtest_run", clientId, { agent: result.agent });
+  return runId;
 }
 
 /** Run a leak-audited, benchmarked backtest from a config file. */
@@ -201,15 +215,19 @@ export async function seedCommand(dbPath?: string): Promise<SeedOutcome> {
     contextLookback: 200,
   };
 
-  const agents: BenchAgent[] = [
-    new BuyAndHoldAgent(),
-    new SmaCrossoverAgent({ fast: 20, slow: 50 }),
-    new SkillMomentumAgent(),
-  ];
   const seeded: SeedOutcome["seeded"] = [];
-  for (const agent of agents) {
+  for (const agent of referenceAgents()) {
     const { result, agentRun } = await runBenchmarked({ ...common, agent, config });
-    const runId = submitRun(path, result, agentRun, "backtest", "reference", clientId);
+    // Deterministic id so re-seeding upserts instead of duplicating.
+    const runId = submitRun(
+      path,
+      result,
+      agentRun,
+      "backtest",
+      "reference",
+      clientId,
+      `seed:${result.agent}`,
+    );
     seeded.push({ agent: result.agent, runId, score: result.score });
   }
   return { seeded };
@@ -269,13 +287,8 @@ export async function sandboxCommand(dbPath?: string): Promise<SandboxOutcome> {
       slippage: { bps: 1 },
       contextLookback: 200,
     };
-    const agents: BenchAgent[] = [
-      new BuyAndHoldAgent(),
-      new SmaCrossoverAgent({ fast: 20, slow: 50 }),
-      new SkillMomentumAgent(),
-    ];
     const runs: SandboxOutcome["runs"] = [];
-    for (const agent of agents) {
+    for (const agent of referenceAgents()) {
       const { result, agentRun } = await runBenchmarked({ ...common, agent, config });
       const runId = submitRun(path, result, agentRun, "sandbox", "reference", clientId);
       runs.push({ agent: result.agent, runId, score: result.score, endEquity: result.endEquity });

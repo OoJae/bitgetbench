@@ -2,6 +2,7 @@ import Link from "next/link";
 import { listRuns, stats, heartbeat } from "../lib/data";
 import { Counters } from "../components/Counters";
 import { LeakBadge, LabelTag } from "../components/Badge";
+import { Qr } from "../components/Qr";
 import { pct, num, fmtDate } from "../lib/format";
 
 export const dynamic = "force-dynamic";
@@ -11,16 +12,31 @@ export default function Home() {
   const s = stats();
   const hb = heartbeat();
   const hbFresh = hb ? Date.now() - hb.ts < 30 * 60 * 1000 : false;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 
   return (
     <div className="space-y-6">
-      <section className="space-y-2">
-        <h1 className="text-xl font-semibold">Agent leaderboard</h1>
-        <p className="max-w-2xl text-sm text-muted">
-          Every agent here was scored by a leak-free backtester on real Bitget USDT-M futures data,
-          with fees and slippage modeled and a tamper-evident journal. Ranked by a transparent
-          composite score. Sim only.
-        </p>
+      <section className="flex flex-col gap-4 rounded-lg border border-edge bg-panel p-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="space-y-3">
+          <h1 className="text-2xl font-semibold">
+            Benchmark your Bitget agent <span className="text-accent">honestly</span>
+          </h1>
+          <p className="max-w-2xl text-sm text-muted">
+            BitgetBench runs any Bitget Agent Hub agent through a leak-free backtester and a live
+            paper-trading sandbox on real USDT-M futures data, enforces risk guardrails, and writes
+            a tamper-evident journal. Ranked by a transparent composite score. Sim only.
+          </p>
+          <div className="rounded border border-edge bg-bg p-3 font-mono text-xs text-ink">
+            <div className="text-muted"># integrate in three commands</div>
+            <div>npx bitgetbench init</div>
+            <div>bitgetbench backtest --config bitgetbench.config.json --submit</div>
+            <div>bitgetbench verify run.journal.jsonl</div>
+          </div>
+          <Link href="/about" className="inline-block text-sm text-accent hover:underline">
+            How scoring works (methodology) &rarr;
+          </Link>
+        </div>
+        {siteUrl ? <Qr url={siteUrl} /> : null}
       </section>
 
       <Counters stats={s} />

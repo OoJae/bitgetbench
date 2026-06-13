@@ -24,6 +24,8 @@ export interface RunInsert {
   mode: RunMode;
   clientId: string;
   label?: "reference" | "external";
+  /** Explicit run id. When set, re-inserting upserts (used to keep seeds idempotent). */
+  id?: string;
 }
 
 export interface EquityPoint {
@@ -55,6 +57,7 @@ function finiteOrNull(x: number): number | null {
 }
 
 function runIdFor(input: RunInsert): string {
+  if (input.id) return input.id;
   if (input.mode === "sandbox") {
     const r = input.result;
     return `sandbox:${r.agent}:${r.symbol}:${r.timeframe}`;

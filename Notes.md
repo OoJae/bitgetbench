@@ -4,16 +4,52 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-14 - Phase 4: polish, docs, public repo (Milestone 4 / submission)
+
+### Summary
+
+Made BitgetBench submission-ready: scrubbed the VPS IP out of tracked files and parameterized deploy config, added two more reference agents, polished the live leaderboard (hero + integrate CTA + QR), wrote the README + sustainability + demo + submission docs, redeployed, and published the public repo. Five reference agents now rank on the live board with the hero and QR rendering.
+
+### Decisions
+
+- Public repo `OoJae/bitgetbench`, IP scrubbed first: the VPS address lives only in a gitignored `deploy/.env` (with `.env.example` committed); nginx `server_name` is a `__BENCH_SERVER_NAME__` token that `provision.sh` substitutes; the systemd service reads an `EnvironmentFile`. The web build inlines `NEXT_PUBLIC_SITE_URL` for the QR. Git history still contains the IP from earlier commits (a server IP is not a secret); history rewrite was offered but not done.
+- Two new deterministic, leak-free reference agents: RSI mean-reversion and Donchian breakout, reusing the point-in-time indicators. Seeding is now idempotent (deterministic `seed:<agent>` ids) so re-seeding upserts.
+- Fixed a telemetry double-count: `sandbox_cycle` is now recorded once per cycle (not once per agent).
+- Feature freeze: no new engine features beyond the two agents.
+
+### What was built
+
+- `deploy/`: `.env.example` + gitignored `.env`, `EnvironmentFile` in the systemd unit, token-substituted nginx vhost, `provision.sh` reads `deploy/.env` and bakes `NEXT_PUBLIC_SITE_URL` into the build.
+- `reference-agents/`: `RsiReversionAgent`, `BreakoutAgent`; both wired into `seed` and `sandbox` via a shared `referenceAgents()` in the CLI.
+- `db/repo.ts`: optional explicit `id` on `RunInsert` for idempotent seeds.
+- `apps/leaderboard`: home hero (value prop + three integrate commands + methodology link) and a QR (`qrcode.react`, shown only when `NEXT_PUBLIC_SITE_URL` is set).
+- Docs: README rewrite (problem, contract, 60-second integrate, ascii architecture, layout, roadmap), `docs/sustainability.md`, `docs/demo.md` (sub-3-min script + shot list), `docs/submission.md` (problem, approach, extensibility, three evidence forms, community-post templates, hackathon fields marked TO CONFIRM).
+
+### Milestone 4 evidence
+
+- Gates green: typecheck, build, build:web, lint (no-em-dash, 116 files), test (87/87), format:check.
+- Live board redeployed: `/api/stats` shows 5 agents registered, leaderboardSize 10 (5 backtest + 5 sandbox), fresh ok heartbeat; the home page renders the hero, all five agents, and the QR ("scan to open").
+- Public repo published at github.com/OoJae/bitgetbench; IP not present in tracked files.
+
+### Remaining human tasks (handed off)
+
+- Record the <= 3 min demo video (script in docs/demo.md).
+- Confirm the live hackathon submission fields (tracks, rubric, dates, platform) and fill the placeholders in docs/submission.md.
+- Post the community announcements (templates in docs/submission.md) and recruit contestants to run their agents.
+- Optional: a domain + certbot TLS; set `TELEGRAM_BOT_TOKEN`/`TELEGRAM_CHAT_ID` in deploy/.env for sandbox failure alerts.
+
+---
+
 ## 2026-06-09 - Phase 3: persistence, leaderboard, live sandbox, deploy (Milestone 3)
 
 ### Summary
 
-Made BitgetBench public and live. Persistence + telemetry (Block D), the Next.js leaderboard (Block E), and the live paper-sandbox + VPS deploy (Block F) are all in. Milestone 3 is met: a public leaderboard is live at http://43.153.109.3/ with multiple real agents and incrementing counters, and the sandbox runs unattended on a 15-minute cron with a heartbeat.
+Made BitgetBench public and live. Persistence + telemetry (Block D), the Next.js leaderboard (Block E), and the live paper-sandbox + VPS deploy (Block F) are all in. Milestone 3 is met: a public leaderboard is live at http://<vps-ip>/ with multiple real agents and incrementing counters, and the sandbox runs unattended on a 15-minute cron with a heartbeat.
 
 ### Decisions
 
 - Database: pivoted from Drizzle + better-sqlite3 to Node's built-in `node:sqlite` with raw parameterized SQL. better-sqlite3's native addon does not build against the current Node (26); the built-in driver is zero-dependency and works everywhere. Loaded via `createRequire` so Vite/Vitest do not choke on the new builtin. DDL is a mechanical Postgres port. CLAUDE.md updated.
-- Hosting: the VPS (Sonar-VPS, 43.153.109.3, Ubuntu 24.04) hosts both the leaderboard (Next.js via `next start` on localhost:3939 behind nginx) and the sandbox cron. No Vercel handoff.
+- Hosting: the VPS (Sonar-VPS, <vps-ip>, Ubuntu 24.04) hosts both the leaderboard (Next.js via `next start` on localhost:3939 behind nginx) and the sandbox cron. No Vercel handoff.
 - Non-destructive deploy: the VPS already runs other services (ports 80/443/3000 in use, an nginx `sonar` site). The leaderboard binds localhost:3939 (3000 was taken) and nginx serves it on the bare IP only via an IP-scoped server block (no default_server), leaving the host's `sonar.my.id` vhost untouched. The bare IP on port 80 now serves BitgetBench.
 - Sandbox model: the cut-scope-ladder "scheduled backtest re-runs" sandbox. Each cycle syncs newly closed candles into the cache and re-runs the three reference agents over the live-updated window, upserting their sandbox rows. Deterministic and unattended.
 - Telemetry honesty: cumulative counters (backtests run, sandbox cycles, api calls) come from a telemetry_events table; distinct users = distinct anonymous client ids (a random UUID at ~/.bitgetbench/client-id, no PII); sim trades = sum of trades across sandbox runs; agents registered = distinct agent names on the board.
@@ -27,7 +63,7 @@ Made BitgetBench public and live. Persistence + telemetry (Block D), the Next.js
 ### Milestone 3 evidence
 
 - Gates green: typecheck, build, lint (no-em-dash, 110 files), test (87/87), format:check.
-- Public: `curl http://43.153.109.3/` returns 200 (Next.js); `/api/stats` returns leaderboardSize 6, sandboxCycles incrementing, simTrades ~1238, a fresh ok heartbeat. The board renders 6 runs (3 backtest + 3 sandbox, "live" tag) with leak-free badges.
+- Public: `curl http://<vps-ip>/` returns 200 (Next.js); `/api/stats` returns leaderboardSize 6, sandboxCycles incrementing, simTrades ~1238, a fresh ok heartbeat. The board renders 6 runs (3 backtest + 3 sandbox, "live" tag) with leak-free badges.
 - Unattended: systemd `bitgetbench-web` enabled + active; cron `*/15 * * * * bitgetbench sandbox` installed; sandbox log writing.
 
 ### Notes / follow-ups
@@ -38,7 +74,7 @@ Made BitgetBench public and live. Persistence + telemetry (Block D), the Next.js
 
 ### Distribution materials (for the user to post; Track 2 evidence)
 
-- One-liner: "BitgetBench: benchmark your Bitget Agent Hub trading agent honestly. Leak-free backtests, risk guardrails, a tamper-evident journal, and a public leaderboard. Free and open source. Integrate in 3 commands." Link http://43.153.109.3/
+- One-liner: "BitgetBench: benchmark your Bitget Agent Hub trading agent honestly. Leak-free backtests, risk guardrails, a tamper-evident journal, and a public leaderboard. Free and open source. Integrate in 3 commands." Link http://<vps-ip>/
 - Demo script (under 60s): open the leaderboard, point at the live counters + heartbeat, open a run detail (equity/drawdown + leak-free badge + journal root), then `bitgetbench init && bitgetbench backtest --config bitgetbench.config.json --submit` to show a new entry appear.
 
 ### Next: Phase 4 (demo polish, sustainability slide, <=3 min video, submission package). Proposed below.

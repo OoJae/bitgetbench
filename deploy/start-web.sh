@@ -4,7 +4,8 @@
 set -euo pipefail
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 export NODE_ENV=production
-export BITGETBENCH_DB=/opt/bitgetbench/data-cache/bitgetbench.db
+# Defaults; systemd's EnvironmentFile (deploy/.env) may override BITGETBENCH_DB.
+export BITGETBENCH_DB="${BITGETBENCH_DB:-/opt/bitgetbench/data-cache/bitgetbench.db}"
 cd /opt/bitgetbench/apps/leaderboard
 # Bind localhost only on a dedicated port (3000 is used by another app on this host);
 # nginx proxies port 80 to it. 3939 avoids the other services running on this VPS.
