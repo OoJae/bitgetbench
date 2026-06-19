@@ -1,5 +1,7 @@
 # BitgetBench
 
+[![CI](https://github.com/OoJae/bitgetbench/actions/workflows/ci.yml/badge.svg)](https://github.com/OoJae/bitgetbench/actions/workflows/ci.yml)
+
 Open-source (MIT) leak-free evaluation and paper-trading harness for agents built on the [Bitget Agent Hub](https://github.com/Bitget-AI/agent_hub).
 
 The Agent Hub gives agents perception and execution but no honest scoring, no sandbox, and no risk guardrails. BitgetBench is the missing open trust layer: point any Agent Hub agent at it, and it runs that agent through a leak-free backtester and a live paper-trading sandbox on real Bitget market data, enforces risk guardrails on every decision, records a tamper-evident trade journal, and publishes results to a public leaderboard.

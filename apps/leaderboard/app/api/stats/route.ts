@@ -3,10 +3,7 @@ import { stats, heartbeat } from "../../../lib/data";
 
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  const hb = heartbeat();
-  return NextResponse.json({
-    ...stats(),
-    sandboxHeartbeat: hb ? { ts: hb.ts, ok: hb.ok === 1, latencyMs: hb.latencyMs } : null,
-  });
+export async function GET() {
+  const [s, hb] = await Promise.all([stats(), heartbeat()]);
+  return NextResponse.json({ ...s, sandboxHeartbeat: hb });
 }

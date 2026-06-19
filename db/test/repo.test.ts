@@ -4,6 +4,7 @@ import {
   getDb,
   insertRun,
   recordEvent,
+  recordHeartbeat,
   getStats,
   topRuns,
   getRun,
@@ -139,12 +140,16 @@ describe("getStats", () => {
     recordEvent(db, "backtest_run", "c1");
     recordEvent(db, "backtest_run", "c2");
     recordEvent(db, "api_call", "c2");
+    recordHeartbeat(db, true, 100);
+    recordHeartbeat(db, true, 120);
     const s = getStats(db);
     expect(s.agentsRegistered).toBe(1);
     expect(s.backtestsRun).toBe(2);
     expect(s.apiCalls).toBe(1);
     expect(s.distinctUsers).toBe(2);
     expect(s.leaderboardSize).toBe(1);
+    // One heartbeat per cycle, so sandboxCycles tracks the heartbeat count.
+    expect(s.sandboxCycles).toBe(2);
   });
 });
 

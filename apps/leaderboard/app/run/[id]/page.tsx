@@ -18,7 +18,7 @@ function Metric({ label, value }: { label: string; value: string }) {
 
 export default async function RunPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const detail = runDetail(id);
+  const detail = await runDetail(id);
   if (!detail) notFound();
   const { run, trades } = detail;
 

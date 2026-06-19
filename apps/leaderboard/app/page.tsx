@@ -7,10 +7,8 @@ import { pct, num, fmtDate } from "../lib/format";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const runs = listRuns(100);
-  const s = stats();
-  const hb = heartbeat();
+export default async function Home() {
+  const [runs, s, hb] = await Promise.all([listRuns(100), stats(), heartbeat()]);
   const hbFresh = hb ? Date.now() - hb.ts < 30 * 60 * 1000 : false;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
 

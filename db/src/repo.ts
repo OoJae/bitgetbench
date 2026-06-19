@@ -231,7 +231,9 @@ export function getStats(db: Db): Stats {
   return {
     agentsRegistered: scalar(db, "SELECT count(DISTINCT agent) AS n FROM runs"),
     backtestsRun: ev("backtest_run"),
-    sandboxCycles: ev("sandbox_cycle"),
+    // One heartbeat is written per sandbox cycle, so this is the accurate cycle count
+    // (the sandbox_cycle event stream was inflated by an earlier per-agent double-count).
+    sandboxCycles: scalar(db, "SELECT count(*) AS n FROM heartbeats"),
     // Total sim trades logged across the live sandbox runs.
     simTrades: scalar(db, "SELECT coalesce(sum(trades), 0) AS n FROM runs WHERE mode = 'sandbox'"),
     apiCalls: ev("api_call"),
