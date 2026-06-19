@@ -7,7 +7,15 @@ import { join, extname } from "node:path";
 const EM_DASH = "—";
 const ROOT = process.cwd();
 
-const IGNORE_DIRS = new Set(["node_modules", "dist", ".next", "coverage", "data-cache", ".git"]);
+const IGNORE_DIRS = new Set([
+  "node_modules",
+  "dist",
+  ".next",
+  ".vercel",
+  "coverage",
+  "data-cache",
+  ".git",
+]);
 
 const CHECK_EXT = new Set([
   ".ts",

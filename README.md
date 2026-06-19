@@ -59,7 +59,9 @@ The backtest prints full metrics, a buy-and-hold benchmark, an alpha/beta decomp
 
 ## Live leaderboard and evidence
 
-The public leaderboard (ranking, per-agent detail with equity/drawdown charts, leak-free badges, journal roots) and the live counters are deployed from a VPS, refreshed by an unattended 15-minute sandbox cron. The URL is in the submission. `/api/stats` exposes the telemetry counters, and `bitgetbench verify` proves any run's journal integrity.
+Live: **https://bitgetbench.vercel.app** (telemetry at https://bitgetbench.vercel.app/api/stats).
+
+The public leaderboard (ranking, per-agent detail with equity/drawdown charts, leak-free badges, journal roots) and the live counters are served on Vercel, with the data and an unattended 15-minute sandbox cron running on a VPS. `/api/stats` exposes the telemetry counters, and `bitgetbench verify` proves any run's journal integrity.
 
 ## Develop
 

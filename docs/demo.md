@@ -1,6 +1,6 @@
 # Demo script (under 3 minutes)
 
-A flawless happy path. Have the live leaderboard open and a terminal in an empty directory.
+A flawless happy path. Have the live leaderboard (https://bitgetbench.vercel.app) open and a terminal in an empty directory.
 
 ## 0:00 - 0:25 The problem
 

@@ -9,6 +9,7 @@ export default tseslint.config(
       "**/dist/**",
       "**/node_modules/**",
       "**/.next/**",
+      "**/.vercel/**",
       "**/coverage/**",
       "data-cache/**",
       "**/next-env.d.ts",

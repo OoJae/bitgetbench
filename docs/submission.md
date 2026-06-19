@@ -35,15 +35,15 @@ The Agent Hub provides perception and execution but no honest scoring, no sandbo
 
 Links to include in the form:
 
-- Live leaderboard: [LIVE URL]
-- Telemetry: [LIVE URL]/api/stats
+- Live leaderboard: https://bitgetbench.vercel.app
+- Telemetry: https://bitgetbench.vercel.app/api/stats
 - Public repo: https://github.com/OoJae/bitgetbench
 - Demo video (<= 3 min): [VIDEO URL]
 
 ## Community posts (templates)
 
-- Announcement: "Built BitgetBench for the Bitget AI Base Camp Hackathon: benchmark your Agent Hub trading agent honestly. Leak-free backtests, risk guardrails, a tamper-evident journal, and a public leaderboard. Free and open source, integrate in 3 commands. Live: [LIVE URL] Repo: https://github.com/OoJae/bitgetbench #BitgetHackathon @ the Bitget AI account"
-- Recruiting contestants: "Running an agent in the hackathon? Put it on the public leaderboard in 3 commands and get a leak-free score + a verifiable journal: [LIVE URL]. Happy to help you integrate."
+- Announcement: "Built BitgetBench for the Bitget AI Base Camp Hackathon: benchmark your Agent Hub trading agent honestly. Leak-free backtests, risk guardrails, a tamper-evident journal, and a public leaderboard. Free and open source, integrate in 3 commands. Live: https://bitgetbench.vercel.app Repo: https://github.com/OoJae/bitgetbench #BitgetHackathon @ the Bitget AI account"
+- Recruiting contestants: "Running an agent in the hackathon? Put it on the public leaderboard in 3 commands and get a leak-free score + a verifiable journal: https://bitgetbench.vercel.app. Happy to help you integrate."
 
 ## Definition of done (status)
 

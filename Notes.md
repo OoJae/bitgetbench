@@ -4,6 +4,34 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-19 - Phase 4.5: CI, telemetry fix, Vercel URL
+
+### Summary
+
+Tied up the loose ends the user picked and added a clean public Vercel URL. The leaderboard is now live at https://bitgetbench.vercel.app (Vercel renders the UI, fetches data server-side from the VPS which stays the source of truth + cron). CI runs the gates on GitHub.
+
+### What was done
+
+- CI: `.github/workflows/ci.yml` runs install + typecheck + build + build:web + lint (no-em-dash) + test + format:check on push/PR; README CI badge added.
+- Removed the `SKILL_PLACEHOLDER` stub (now exports `SKILL_ID`); set the LICENSE author.
+- Telemetry: `getStats.sandboxCycles` now derives from the heartbeat count (one heartbeat per cycle), retiring the inflated `sandbox_cycle` event count (the live number dropped from ~1848 to the real ~866). db test updated.
+- Data-source switch: `apps/leaderboard/lib/data.ts` reads SQLite on the VPS (dynamic import of @bitgetbench/db, keeping node:sqlite out of any serverless bundle) or fetches the VPS JSON server-side when `BITGETBENCH_API_BASE` is set. Added `/api/runs` and `/api/run/[id]` JSON routes. Pages + stats route made async.
+- VPS redeployed so it serves the JSON API.
+- Vercel: project `oojaes-projects/bitgetbench`, Root Directory set to `apps/leaderboard` via the API (so a repo-root deploy builds the app in monorepo context; the subdir-upload and prebuilt-pnpm-tracing paths both failed, remote build from root works). Deployment Protection disabled for a public board. Env: `BITGETBENCH_API_BASE=http://<vps-ip>` (server-side fetch, no mixed content), `NEXT_PUBLIC_SITE_URL=https://bitgetbench.vercel.app` (QR). Verified the Vercel URL renders all 5 agents + stats from the VPS, hero + QR present.
+- Docs: README/demo/submission now use https://bitgetbench.vercel.app as the primary public link (clean, no IP).
+
+### Decisions
+
+- "Vercel UI, VPS data" (not Postgres): the VPS SQLite + cron stays the single source of truth; Vercel is a thin server-side-rendered client. Postgres remains the documented scale path.
+- Vercel monorepo deploy: set Root Directory server-side via the REST API using the authed CLI token, then deploy from the repo root for full-monorepo build context. Prebuilt deploys are unreliable with pnpm symlink tracing.
+- The Vercel env holds the VPS IP; the repo stays IP-free.
+
+### Status
+
+Definition of Done met on the build side. Live: https://bitgetbench.vercel.app and (origin) the VPS. Remaining human tasks unchanged: record the <=3 min video, confirm hackathon submission fields, post the community announcements (templates with the URL inlined in docs/submission.md), recruit a first external agent.
+
+---
+
 ## 2026-06-14 - Phase 4: polish, docs, public repo (Milestone 4 / submission)
 
 ### Summary
