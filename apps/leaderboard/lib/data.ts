@@ -18,7 +18,12 @@ export interface Heartbeat {
 async function apiGet<T>(path: string): Promise<T | null> {
   if (!apiBase) return null;
   try {
-    const res = await fetch(`${apiBase}${path}`, { cache: "no-store" });
+    // The VPS backend is geographically distant from Vercel's region, so cache the response
+    // (ISR) and cap the wait, so users get a fast cached page instead of a cross-region hop.
+    const res = await fetch(`${apiBase}${path}`, {
+      signal: AbortSignal.timeout(8000),
+      next: { revalidate: 60 },
+    });
     if (!res.ok) return null;
     return (await res.json()) as T;
   } catch {

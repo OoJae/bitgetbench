@@ -5,7 +5,9 @@ import { EquityChart, DrawdownChart } from "../../../components/Charts";
 import { LeakBadge, LabelTag } from "../../../components/Badge";
 import { pct, num, usd, shortHash, fmtDate } from "../../../lib/format";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
+// Render run pages on demand (ids are not known at build), then cache per the revalidate.
+export const dynamicParams = true;
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (

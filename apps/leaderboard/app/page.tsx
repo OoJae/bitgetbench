@@ -5,7 +5,9 @@ import { LeakBadge, LabelTag } from "../components/Badge";
 import { Qr } from "../components/Qr";
 import { pct, num, fmtDate } from "../lib/format";
 
-export const dynamic = "force-dynamic";
+// ISR: serve a cached page and refresh in the background every 60s. Keeps the site fast and
+// resilient even though the data backend (VPS) is in a distant region.
+export const revalidate = 60;
 
 export default async function Home() {
   const [runs, s, hb] = await Promise.all([listRuns(100), stats(), heartbeat()]);
