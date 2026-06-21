@@ -4,6 +4,14 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-22 - Hotfix: Vercel site not loading
+
+Two issues surfaced after the Vercel deploy and both are fixed and live.
+1. Slow/hanging loads: Vercel renders in US-East but the data backend (VPS) is in Asia, and pages fetched it on every request with no timeout, so the cross-region hop made pages slow or hang. Fix: ISR (`revalidate = 60`) on the pages + a cached, 8s-timeout server-side fetch, so users get an instant cached page and the VPS is polled in the background (empty board fallback if the VPS is briefly down). Home now loads in ~1.4s.
+2. Run-detail pages 404'd: Next hands page params URL-encoded and does not decode them (route handlers do), so run ids containing ":" (the deterministic `sandbox:*` and `seed:*` ids) arrived as `sandbox%3A...` and missed the lookup. Fix: decode the id on the run page. Run pages now 200 with full content. (Latent since deterministic seeding in Phase 4; the API was always fine.)
+
+Verified live: https://bitgetbench.vercel.app home + run-detail pages 200, content renders. Gates green, VPS redeployed.
+
 ## 2026-06-19 - Phase 4.5: CI, telemetry fix, Vercel URL
 
 ### Summary
