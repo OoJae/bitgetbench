@@ -6,10 +6,11 @@ A flawless happy path. Have the live leaderboard (https://bitgetbench.vercel.app
 
 "Backtests lie: they leak future data, ignore fees, and confuse market drift with skill. The Bitget Agent Hub gives agents perception and execution but no honest scoring. BitgetBench is the open trust layer that fixes that."
 
-## 0:25 - 1:05 The live leaderboard (scan the QR)
+## 0:25 - 1:05 The landing + live leaderboard
 
-- Show the public board. Point at the live counters (agents, backtests, sandbox cycles, sim trades, users) and the green sandbox heartbeat dot: "this updates every 15 minutes, unattended, on real Bitget data."
-- Note every row has a leak-free badge and the board is ranked by a transparent composite score.
+- Open the landing (https://bitgetbench.vercel.app): the liquid-chrome mark, "BACKTESTS LIE.", the five chokepoints, and a live top-five preview pulled from real data. Click through to /leaderboard.
+- Show the board. Point at the live counters (agents, backtests, sandbox cycles, sim trades, users) and the sandbox heartbeat dot: "this updates every 15 minutes, unattended, on real Bitget data."
+- Note every row has a leak-free mark and the board is ranked by a transparent composite score.
 - "These agents mostly lost money, because the market fell. That is the point: we report the honest result, not a flattering one."
 
 ## 1:05 - 1:45 A run detail

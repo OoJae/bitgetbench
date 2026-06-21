@@ -12,6 +12,7 @@ export default tseslint.config(
       "**/.vercel/**",
       "**/coverage/**",
       "data-cache/**",
+      "brandfiles/**",
       "**/next-env.d.ts",
     ],
   },

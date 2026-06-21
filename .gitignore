@@ -15,6 +15,9 @@ coverage/
 # market data cache (regenerated from Bitget)
 data-cache/
 
+# design reference (Claude Design exports; contain em dashes, not part of the build)
+brandfiles/
+
 # env and secrets
 .env
 .env.local

@@ -57,11 +57,11 @@ The backtest prints full metrics, a buy-and-hold benchmark, an alpha/beta decomp
                                                    Next.js leaderboard  +  live sandbox cron
 ```
 
-## Live leaderboard and evidence
+## Live site and evidence
 
-Live: **https://bitgetbench.vercel.app** (telemetry at https://bitgetbench.vercel.app/api/stats).
+Live: **https://bitgetbench.vercel.app** (the leaderboard is at https://bitgetbench.vercel.app/leaderboard, telemetry at https://bitgetbench.vercel.app/api/stats).
 
-The public leaderboard (ranking, per-agent detail with equity/drawdown charts, leak-free badges, journal roots) and the live counters are served on Vercel, with the data and an unattended 15-minute sandbox cron running on a VPS. `/api/stats` exposes the telemetry counters, and `bitgetbench verify` proves any run's journal integrity.
+The landing page, the public leaderboard (ranking, per-agent detail with equity/drawdown charts, leak-free badges, journal roots), and the live counters are served on Vercel, with the data and an unattended 15-minute sandbox cron running on a VPS. `/api/stats` exposes the telemetry counters, and `bitgetbench verify` proves any run's journal integrity.
 
 ## Develop
 

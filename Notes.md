@@ -4,9 +4,39 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-22 - Brand system + landing page
+
+### Summary
+
+Applied the Claude Design brand to the whole site and added a marketing landing page. The brand is a monochrome editorial system (Void black / Ink off-white, Archivo + Space Mono, no color accent) with a live three.js liquid-chrome hero mark. `/` is now the landing; the ranking table moved to `/leaderboard`. All four pages are on-brand. No backend changes.
+
+### What was done
+
+- Foundation: Tailwind tokens (void/carbon/ink/bone), Archivo + Space Mono via next/font, globals (void bg, selection, ticker/blink keyframes, smooth scroll), film grain + scroll progress mounted in the layout.
+- Brand components (`components/brand/`): Kicker, SectionLabel, PillButton, CodeChip, LiveDot, LeakTag, Ticker, CornerTicks, SparkLine, Clock, Reveal (IntersectionObserver), FilmGrain, ScrollProgress, SiteHeader/SiteFooter/Shell.
+- `ChromeBlob.tsx`: faithful React port of the brand's three.js liquid-chrome mark (noise-deformed icosahedron, procedural chrome matcap, idle rotation + scroll/pointer reaction), with a static gradient fallback. `three` + `@types/three` added to the leaderboard.
+- Landing (`app/page.tsx`): hero (chrome blob + nav + tagline + "how it works"), "BACKTESTS LIE.", the five-chokepoints harness, a live top-5 leaderboard preview (real data) with sparklines + a telemetry ticker, the integrate section (BenchAgent code + 4 steps), and the "RUN YOUR AGENT." footer CTA. Reveal-on-scroll throughout. ISR (revalidate 60).
+- Restyled: `/leaderboard` (new, the old `/` table on-brand with sparklines + ticker + heartbeat dot), `/run/[id]` (corner-tick chart frames, mono labels, kept the id-decode + ISR fixes), `/about` (numbered method sections), and `Charts.tsx` recolored to monochrome. Removed the old `Counters`/`Badge` components.
+- Docs: README/demo/submission updated for the new routes (site root = landing, board = `/leaderboard`).
+
+### Decisions
+
+- Strict monochrome per the brand: dropped the green/red P&L colors (returns convey sign by +/- and weight; status uses a blinking dot, never color). One-line revert if color is wanted back.
+- three.js loads only on the landing route (the hero is client-only; SSR renders the static fallback). The Claude Design runtime (x-dc/x-import/support.js) is not used; visuals are reimplemented in React/Tailwind. `brandfiles/` is gitignored (and excluded from lint/em-dash) since the design HTML contains em dashes.
+
+### Evidence
+
+- Gates green: typecheck, build, build:web, lint (no-em-dash, 130 files), test (87/87), format:check.
+- Local smoke (SQLite mode): `/` (landing sections + chrome blob), `/leaderboard`, `/about`, `/run/<colon-id>` all 200 with content.
+
+### Next: deploy to Vercel + VPS and verify the live brand.
+
+---
+
 ## 2026-06-22 - Hotfix: Vercel site not loading
 
 Two issues surfaced after the Vercel deploy and both are fixed and live.
+
 1. Slow/hanging loads: Vercel renders in US-East but the data backend (VPS) is in Asia, and pages fetched it on every request with no timeout, so the cross-region hop made pages slow or hang. Fix: ISR (`revalidate = 60`) on the pages + a cached, 8s-timeout server-side fetch, so users get an instant cached page and the VPS is polled in the background (empty board fallback if the VPS is briefly down). Home now loads in ~1.4s.
 2. Run-detail pages 404'd: Next hands page params URL-encoded and does not decode them (route handlers do), so run ids containing ":" (the deterministic `sandbox:*` and `seed:*` ids) arrived as `sandbox%3A...` and missed the lookup. Fix: decode the id on the run page. Run pages now 200 with full content. (Latent since deterministic seeding in Phase 4; the API was always fine.)
 

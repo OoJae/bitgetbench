@@ -35,7 +35,8 @@ The Agent Hub provides perception and execution but no honest scoring, no sandbo
 
 Links to include in the form:
 
-- Live leaderboard: https://bitgetbench.vercel.app
+- Live site: https://bitgetbench.vercel.app
+- Leaderboard: https://bitgetbench.vercel.app/leaderboard
 - Telemetry: https://bitgetbench.vercel.app/api/stats
 - Public repo: https://github.com/OoJae/bitgetbench
 - Demo video (<= 3 min): [VIDEO URL]

@@ -14,6 +14,7 @@ const IGNORE_DIRS = new Set([
   ".vercel",
   "coverage",
   "data-cache",
+  "brandfiles",
   ".git",
 ]);
 

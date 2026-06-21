@@ -17,29 +17,33 @@ export interface Point {
   e: number;
 }
 
+// Monochrome brand palette.
+const INK = "#F4F4F2";
+const HAIR = "rgba(244,244,242,.12)";
+const ASH = "rgba(244,244,242,.45)";
+const PANEL = "#0E0E0E";
+
 function fmtAxisDate(t: number): string {
   return new Date(t).toISOString().slice(5, 10);
 }
+
+const tooltip = {
+  contentStyle: { background: PANEL, border: `1px solid ${HAIR}`, color: INK },
+};
 
 export function EquityChart({ points }: { points: Point[] }) {
   return (
     <ResponsiveContainer width="100%" height={240}>
       <LineChart data={points} margin={{ top: 8, right: 12, bottom: 0, left: 8 }}>
-        <CartesianGrid stroke="#222838" strokeDasharray="3 3" />
-        <XAxis
-          dataKey="t"
-          tickFormatter={fmtAxisDate}
-          stroke="#8b93a7"
-          fontSize={11}
-          minTickGap={40}
-        />
-        <YAxis stroke="#8b93a7" fontSize={11} domain={["auto", "auto"]} width={56} />
+        <CartesianGrid stroke={HAIR} strokeDasharray="3 3" />
+        <XAxis dataKey="t" tickFormatter={fmtAxisDate} stroke={ASH} fontSize={11} minTickGap={40} />
+        <YAxis stroke={ASH} fontSize={11} domain={["auto", "auto"]} width={56} />
         <Tooltip
-          contentStyle={{ background: "#131722", border: "1px solid #222838", color: "#e6e9ef" }}
+          {...tooltip}
           labelFormatter={(t) => new Date(Number(t)).toISOString().slice(0, 16).replace("T", " ")}
           formatter={(v: number) => [`${v.toFixed(2)} USDT`, "equity"]}
         />
-        <Line type="monotone" dataKey="e" stroke="#16c784" dot={false} strokeWidth={1.6} />
+        <Line type="monotone" dataKey="e" stroke={INK} dot={false} strokeWidth={1.6} />
       </LineChart>
     </ResponsiveContainer>
   );
@@ -54,21 +58,15 @@ export function DrawdownChart({ points }: { points: Point[] }) {
   return (
     <ResponsiveContainer width="100%" height={180}>
       <AreaChart data={dd} margin={{ top: 8, right: 12, bottom: 0, left: 8 }}>
-        <CartesianGrid stroke="#222838" strokeDasharray="3 3" />
-        <XAxis
-          dataKey="t"
-          tickFormatter={fmtAxisDate}
-          stroke="#8b93a7"
-          fontSize={11}
-          minTickGap={40}
-        />
-        <YAxis stroke="#8b93a7" fontSize={11} width={56} unit="%" />
+        <CartesianGrid stroke={HAIR} strokeDasharray="3 3" />
+        <XAxis dataKey="t" tickFormatter={fmtAxisDate} stroke={ASH} fontSize={11} minTickGap={40} />
+        <YAxis stroke={ASH} fontSize={11} width={56} unit="%" />
         <Tooltip
-          contentStyle={{ background: "#131722", border: "1px solid #222838", color: "#e6e9ef" }}
+          {...tooltip}
           labelFormatter={(t) => new Date(Number(t)).toISOString().slice(0, 16).replace("T", " ")}
           formatter={(v: number) => [`${v.toFixed(2)}%`, "drawdown"]}
         />
-        <Area type="monotone" dataKey="d" stroke="#ea3943" fill="#ea3943" fillOpacity={0.18} />
+        <Area type="monotone" dataKey="d" stroke={ASH} fill={INK} fillOpacity={0.08} />
       </AreaChart>
     </ResponsiveContainer>
   );

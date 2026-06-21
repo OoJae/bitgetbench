@@ -1,38 +1,36 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { Archivo, Space_Mono } from "next/font/google";
+import { FilmGrain } from "../components/brand/FilmGrain";
+import { ScrollProgress } from "../components/brand/ScrollProgress";
 import "./globals.css";
 
+const archivo = Archivo({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: ["400", "700"],
+  variable: "--font-space-mono",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "BitgetBench Leaderboard",
-  description: "Leak-free evaluation and paper-trading leaderboard for Bitget Agent Hub agents",
+  title: "BitgetBench - The honest benchmark for AI trading agents",
+  description:
+    "Leak-free evaluation and paper-trading harness for Bitget Agent Hub agents. Point-in-time backtests, risk guardrails, a tamper-evident journal, and a public leaderboard. Sim only.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen">
-        <header className="border-b border-edge">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-            <Link href="/" className="text-lg font-semibold">
-              Bitget<span className="text-accent">Bench</span>
-            </Link>
-            <nav className="flex gap-4 text-sm text-muted">
-              <Link href="/" className="hover:text-ink">
-                Leaderboard
-              </Link>
-              <Link href="/about" className="hover:text-ink">
-                Methodology
-              </Link>
-              <a href="/api/stats" className="hover:text-ink">
-                API
-              </a>
-            </nav>
-          </div>
-        </header>
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 py-8 text-xs text-muted">
-          Sim only. No real capital. Public Bitget market data. MIT licensed.
-        </footer>
+    <html lang="en" className={`${archivo.variable} ${spaceMono.variable}`}>
+      <body className="min-h-screen bg-void font-sans text-ink">
+        <FilmGrain />
+        <ScrollProgress />
+        {children}
       </body>
     </html>
   );

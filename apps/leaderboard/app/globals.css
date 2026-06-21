@@ -6,7 +6,18 @@
   color-scheme: dark;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  background-color: #0b0e14;
-  color: #e6e9ef;
+  background-color: #0a0a0a;
+  color: #f4f4f2;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: #f4f4f2;
+  color: #0a0a0a;
 }
