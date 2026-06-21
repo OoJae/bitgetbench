@@ -19,7 +19,10 @@ function Metric({ label, value }: { label: string; value: string }) {
 }
 
 export default async function RunPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+  const { id: rawId } = await params;
+  // Next hands page params URL-encoded (route handlers decode, pages do not), and our run
+  // ids contain ":" (e.g. "sandbox:buy-and-hold:BTCUSDT:15m"), so decode before lookup.
+  const id = decodeURIComponent(rawId);
   const detail = await runDetail(id);
   if (!detail) notFound();
   const { run, trades } = detail;
