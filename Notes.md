@@ -29,7 +29,11 @@ Applied the Claude Design brand to the whole site and added a marketing landing 
 - Gates green: typecheck, build, build:web, lint (no-em-dash, 130 files), test (87/87), format:check.
 - Local smoke (SQLite mode): `/` (landing sections + chrome blob), `/leaderboard`, `/about`, `/run/<colon-id>` all 200 with content.
 
-### Next: deploy to Vercel + VPS and verify the live brand.
+### Deploy (done)
+
+- Committed `3a56082` ("feat: brand system + landing page"), pushed; CI green on that SHA.
+- Vercel production deploy READY. Live verified: `/` (hero tagline, BACKTESTS, five chokepoints, RUN YOUR AGENT) ~1s, `/leaderboard` (real agents: breakout-20, skill-momentum), `/about`, and a real `/run/<id>` all 200.
+- VPS rsynced + reprovisioned (`bitgetbench-web` active); public landing 200 and on-brand. Vercel remains the primary URL; the VPS still serves the unchanged data API + the sandbox cron.
 
 ---
 
