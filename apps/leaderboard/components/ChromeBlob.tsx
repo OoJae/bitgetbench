@@ -69,6 +69,9 @@ export function ChromeBlob() {
     renderer.setSize(w, h);
     renderer.domElement.style.cssText = "width:100%;height:100%;display:block;";
     el.appendChild(renderer.domElement);
+    // WebGL is live: drop the static fallback glow so the mark sits on pure void
+    // (matches the brand reference; otherwise the gradient shows as a halo behind it).
+    el.style.background = "none";
 
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(34, w / h, 0.1, 100);
@@ -155,8 +158,8 @@ export function ChromeBlob() {
       ref={mount}
       className="h-full w-full"
       style={{
-        // Soft chrome glow behind the mark; also the static fallback if WebGL is missing.
-        // Ends at near-void so the corners blend into the page.
+        // Static chrome-disc fallback for SSR and the no-WebGL case only. Cleared the
+        // instant the live canvas mounts (see useEffect) so the mark sits on pure void.
         background:
           "radial-gradient(circle at 42% 36%, rgba(251,251,251,.9) 0%, rgba(154,154,154,.6) 26%, rgba(18,18,18,.4) 60%, rgba(10,10,10,0) 80%)",
       }}
