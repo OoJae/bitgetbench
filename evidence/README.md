@@ -9,15 +9,15 @@ is reproducible from the public repo and the live site. Sim only, read-only mark
 
 ## Files
 
-| File | What it proves |
-|------|----------------|
-| `telemetry.json` | Live `/api/stats` snapshot: agents registered, backtests run, sandbox cycles, sim trades, distinct users, and the latest sandbox heartbeat. Real cumulative usage. |
-| `leaderboard.json` | Live `/api/runs` snapshot: every ranked run with its leak status, verification tier (`engine-verified` vs `data-clean`), composite score, return, Sharpe, max drawdown, and journal root. |
-| `sample-backtest.result.json` | A full `RunResult` from a reproducible 500-bar BTCUSDT 15m backtest of the SMA 20/50 reference agent: metrics, buy-and-hold benchmark, alpha/beta decomposition, leak certificate (`clean: true`, `scope: engine`), journal root, score, and tier. |
-| `sample-backtest.journal.jsonl` | The hash-chained, tamper-evident journal for that run (500 entries, one per step). |
-| `verify.txt` | `bitgetbench verify` output proving the journal chain is intact (`ok: true`, 500 checked), then the same after tampering one entry (`ok: false`, `brokenAt: 250`). Tamper-evidence, demonstrated. |
-| `api-mcp-sample-io.json` | Real request/response for the no-code path: `run_backtest` (strategy spec, returns an `engine-verified` result), `register_agent` (remote webhook), `run_backtest` (remote, queued job), the job poll, the resulting `data-clean` run, and `/api/stats`. API keys redacted. |
-| `sandbox-cron-sample.log` | One complete cycle of the unattended 15-minute sandbox cron (paths and IPs sanitized): candles synced and the five reference agents re-run. |
+| File                            | What it proves                                                                                                                                                                                                                                                              |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `telemetry.json`                | Live `/api/stats` snapshot: agents registered, backtests run, sandbox cycles, sim trades, distinct users, and the latest sandbox heartbeat. Real cumulative usage.                                                                                                          |
+| `leaderboard.json`              | Live `/api/runs` snapshot: every ranked run with its leak status, verification tier (`engine-verified` vs `data-clean`), composite score, return, Sharpe, max drawdown, and journal root.                                                                                   |
+| `sample-backtest.result.json`   | A full `RunResult` from a reproducible 500-bar BTCUSDT 15m backtest of the SMA 20/50 reference agent: metrics, buy-and-hold benchmark, alpha/beta decomposition, leak certificate (`clean: true`, `scope: engine`), journal root, score, and tier.                          |
+| `sample-backtest.journal.jsonl` | The hash-chained, tamper-evident journal for that run (500 entries, one per step).                                                                                                                                                                                          |
+| `verify.txt`                    | `bitgetbench verify` output proving the journal chain is intact (`ok: true`, 500 checked), then the same after tampering one entry (`ok: false`, `brokenAt: 250`). Tamper-evidence, demonstrated.                                                                           |
+| `api-mcp-sample-io.json`        | Real request/response for the no-code path: `run_backtest` (strategy spec, returns an `engine-verified` result), `register_agent` (remote webhook), `run_backtest` (remote, queued job), the job poll, the resulting `data-clean` run, and `/api/stats`. API keys redacted. |
+| `sandbox-cron-sample.log`       | One complete cycle of the unattended 15-minute sandbox cron (paths and IPs sanitized): candles synced and the five reference agents re-run.                                                                                                                                 |
 
 ## How to reproduce / verify
 
