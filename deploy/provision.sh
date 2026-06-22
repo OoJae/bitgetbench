@@ -72,7 +72,9 @@ nginx -t
 systemctl reload nginx
 
 echo "== sandbox cron (every 15 min) =="
-CRON_LINE="*/15 * * * * cd $APP_DIR && BITGETBENCH_DB=$DB /usr/bin/node packages/cli/dist/bin.js sandbox >> /var/log/bitgetbench-sandbox.log 2>&1 # bitgetbench-sandbox"
+# flock -n skips a cycle if the previous one is still running, so a slow remote-agent pass can
+# never stack overlapping processes writing the same SQLite DB.
+CRON_LINE="*/15 * * * * /usr/bin/flock -n /var/lock/bitgetbench-sandbox.lock -c 'cd $APP_DIR && BITGETBENCH_DB=$DB /usr/bin/node packages/cli/dist/bin.js sandbox >> /var/log/bitgetbench-sandbox.log 2>&1' # bitgetbench-sandbox"
 ( crontab -l 2>/dev/null | grep -v 'bitgetbench-sandbox' || true; echo "$CRON_LINE" ) | crontab -
 
 echo "== run one sandbox cycle now =="
@@ -80,3 +82,4 @@ BITGETBENCH_DB="$DB" /usr/bin/node packages/cli/dist/bin.js sandbox >> /var/log/
 
 echo "== done =="
 systemctl --no-pager status bitgetbench-web | head -5 || true
+systemctl --no-pager status bitgetbench-api | head -5 || true
