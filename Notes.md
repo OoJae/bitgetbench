@@ -4,6 +4,12 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-22 - Hotfix: chrome-mark halo on the landing
+
+The live landing showed a soft white halo around the chrome sphere that the brand reference does not have. Cause: the `ChromeBlob` mount div carried a `radial-gradient` background intended only as the no-WebGL fallback, but it painted behind the live transparent WebGL canvas too. Fix: clear the div background (`background: none`) the instant the WebGL canvas mounts, so the mark sits on pure void; the gradient now only shows for SSR / no-WebGL. Shipped to Vercel + VPS, both landings 200. (Client-side runtime change; visible on a browser hard-refresh.)
+
+---
+
 ## 2026-06-22 - Brand system + landing page
 
 ### Summary
