@@ -98,7 +98,7 @@ export default async function Leaderboard({
                 <span className="font-sans text-[15px] font-bold">
                   {(r.score * 100).toFixed(1)}
                 </span>
-                <span className={r.totalReturn >= 0 ? "text-ink" : "text-ink/55"}>
+                <span className={r.totalReturn >= 0 ? "text-up" : "text-down"}>
                   {r.totalReturn >= 0 ? "+" : ""}
                   {pct(r.totalReturn)}
                 </span>

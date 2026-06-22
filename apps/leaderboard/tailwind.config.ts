@@ -10,6 +10,9 @@ export default {
         carbon: "#0E0E0E", // raised panel
         ink: "#F4F4F2", // text + chrome highlight
         bone: "#E8E7E3", // inverse surface
+        // P&L only: the single place color is allowed, for signed market change.
+        up: "#34D399", // gain (emerald)
+        down: "#F87171", // loss (red)
       },
       fontFamily: {
         sans: ["var(--font-archivo)", "system-ui", "sans-serif"],

@@ -10,11 +10,21 @@ import { pct, num, usd, shortHash, fmtDate } from "../../../lib/format";
 export const revalidate = 60;
 export const dynamicParams = true;
 
-function Metric({ label, value }: { label: string; value: string }) {
+function Metric({
+  label,
+  value,
+  signed,
+}: {
+  label: string;
+  value: string;
+  /** When set, color the value green/red by sign (P&L-only color exception). */
+  signed?: number;
+}) {
+  const tone = signed === undefined ? "" : signed >= 0 ? "text-up" : "text-down";
   return (
     <div className="border border-ink/12 bg-carbon px-3 py-2.5">
       <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/45">{label}</div>
-      <div className="mt-1 font-sans tabular-nums">{value}</div>
+      <div className={`mt-1 font-sans tabular-nums ${tone}`}>{value}</div>
     </div>
   );
 }
@@ -85,8 +95,9 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
             <Metric
               label="Return"
               value={`${run.totalReturn >= 0 ? "+" : ""}${pct(run.totalReturn)}`}
+              signed={run.totalReturn}
             />
-            <Metric label="CAGR" value={pct(run.cagr)} />
+            <Metric label="CAGR" value={pct(run.cagr)} signed={run.cagr} />
             <Metric label="Sharpe" value={num(run.sharpe)} />
             <Metric label="Sortino" value={num(run.sortino)} />
             <Metric label="Max DD" value={pct(run.maxDrawdown)} />
@@ -105,7 +116,11 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
               Buy-and-hold benchmark
             </h2>
             <div className="grid grid-cols-3 gap-2">
-              <Metric label="Return" value={pct(run.benchmark.totalReturn)} />
+              <Metric
+                label="Return"
+                value={pct(run.benchmark.totalReturn)}
+                signed={run.benchmark.totalReturn}
+              />
               <Metric label="Sharpe" value={num(run.benchmark.sharpe)} />
               <Metric label="Max DD" value={pct(run.benchmark.maxDrawdown)} />
             </div>
@@ -115,10 +130,10 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
               Return decomposition
             </h2>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              <Metric label="Alpha/step" value={run.alpha.toExponential(2)} />
+              <Metric label="Alpha/step" value={run.alpha.toExponential(2)} signed={run.alpha} />
               <Metric label="Beta" value={num(run.beta, 3)} />
-              <Metric label="Market" value={pct(run.marketReturn)} />
-              <Metric label="Skill" value={pct(run.skillReturn)} />
+              <Metric label="Market" value={pct(run.marketReturn)} signed={run.marketReturn} />
+              <Metric label="Skill" value={pct(run.skillReturn)} signed={run.skillReturn} />
             </div>
           </div>
         </section>
