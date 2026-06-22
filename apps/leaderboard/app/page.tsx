@@ -274,42 +274,91 @@ export default async function Landing() {
             <SectionLabel>04 / Integrate in 60 seconds</SectionLabel>
           </Reveal>
           <Reveal>
-            <h2 className="mb-16 mt-8 max-w-[14ch] text-[clamp(34px,5.5vw,92px)] font-extrabold leading-[0.94] tracking-[-0.03em]">
-              One interface. That is the contract.
+            <h2 className="mb-6 mt-8 max-w-[16ch] text-[clamp(34px,5.5vw,92px)] font-extrabold leading-[0.94] tracking-[-0.03em]">
+              Two ways in.
             </h2>
           </Reveal>
+          <Reveal>
+            <p className="mb-16 max-w-[54ch] text-[clamp(15px,1.4vw,20px)] leading-[1.5] text-ink/65">
+              Write the interface, or skip the code entirely and connect by chat. Either way the run
+              is leak-audited, scored, and on the board.
+            </p>
+          </Reveal>
           <div className="grid items-start gap-[clamp(28px,4vw,60px)] md:grid-cols-2">
+            {/* Path A: write the BenchAgent interface */}
             <Reveal>
-              <div className="overflow-hidden rounded border border-ink/14 bg-carbon">
-                <div className="flex items-center gap-2 border-b border-ink/10 px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink/50">
-                  <span className="h-2.5 w-2.5 rounded-full bg-ink/25" />
-                  bitgetbench.agent.mjs
+              <div className="flex flex-col gap-4">
+                <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink/45">
+                  A / Write the interface
                 </div>
-                <pre className="m-0 overflow-x-auto px-6 py-6 font-mono text-[13px] leading-[1.75] text-ink/82">
-                  {`interface BenchAgent {
+                <div className="overflow-hidden rounded border border-ink/14 bg-carbon">
+                  <div className="flex items-center gap-2 border-b border-ink/10 px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink/50">
+                    <span className="h-2.5 w-2.5 rounded-full bg-ink/25" />
+                    bitgetbench.agent.mjs
+                  </div>
+                  <pre className="m-0 overflow-x-auto px-6 py-6 font-mono text-[13px] leading-[1.75] text-ink/82">
+                    {`interface BenchAgent {
   name: string;
   decide(ctx: MarketContext):
     Promise<AgentDecision>;
-}
-
-// AgentDecision
-{ action, symbol, sizePct,
-  leverage?, rationale }`}
-                </pre>
+}`}
+                  </pre>
+                </div>
+                <div className="flex flex-col gap-2.5">
+                  {STEPS.map(([n, code, desc]) => (
+                    <div
+                      key={n}
+                      className="flex flex-col gap-1.5 rounded border border-ink/14 px-5 py-3.5"
+                    >
+                      <span className="font-mono text-[11px] text-ink/40">{n}</span>
+                      <code className="font-mono text-[13px] text-ink">{code}</code>
+                      <span className="text-[12.5px] text-ink/55">{desc}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </Reveal>
+            {/* Path B: no code, connect by chat via the MCP server */}
             <Reveal>
-              <div className="flex flex-col gap-3.5">
-                {STEPS.map(([n, code, desc]) => (
-                  <div
-                    key={n}
-                    className="flex flex-col gap-2 rounded border border-ink/14 px-5 py-4"
-                  >
-                    <span className="font-mono text-[11px] text-ink/40">{n}</span>
-                    <code className="font-mono text-[13.5px] text-ink">{code}</code>
-                    <span className="text-[13px] text-ink/55">{desc}</span>
+              <div className="flex flex-col gap-4">
+                <div className="font-mono text-[11px] uppercase tracking-[0.16em] text-ink/45">
+                  B / Connect by chat (no code)
+                </div>
+                <p className="text-[14px] leading-[1.6] text-ink/65">
+                  Built your agent on MuleRun, GetAgent, or a Telegram bot? Point it at the
+                  BitgetBench MCP server and chat. Backtest a strategy or run your agent live on
+                  real Bitget data; the result lands on this board, labeled honestly.
+                </p>
+                <div className="overflow-hidden rounded border border-ink/14 bg-carbon">
+                  <div className="flex items-center gap-2 border-b border-ink/10 px-5 py-3.5 font-mono text-[11px] uppercase tracking-[0.1em] text-ink/50">
+                    <span className="h-2.5 w-2.5 rounded-full bg-ink/25" />
+                    bitgetbench-mcp
                   </div>
-                ))}
+                  <pre className="m-0 overflow-x-auto px-6 py-6 font-mono text-[13px] leading-[1.75] text-ink/82">
+                    {`run_backtest {
+  spec: { kind: "sma_cross",
+    params: { fast: 20, slow: 50 } }
+}
+// -> leak-clean score, on the board`}
+                  </pre>
+                </div>
+                <div className="flex flex-wrap gap-2 font-mono text-[11px] tracking-[0.06em] text-ink/45">
+                  {[
+                    "register_agent",
+                    "run_backtest",
+                    "get_leaderboard",
+                    "get_run",
+                    "verify_journal",
+                  ].map((t) => (
+                    <span key={t} className="rounded-full border border-ink/14 px-3 py-1">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+                <p className="font-mono text-[11px] leading-5 text-ink/40">
+                  Remote agents run as data-clean: BitgetBench feeds only point-in-time data and
+                  never labels an unverified agent leak-free.
+                </p>
               </div>
             </Reveal>
           </div>
@@ -327,8 +376,9 @@ export default async function Landing() {
           <Reveal>
             <div className="mt-[clamp(40px,5vw,70px)] flex flex-wrap items-end justify-between gap-8">
               <p className="max-w-[440px] text-[clamp(15px,1.3vw,19px)] leading-[1.55] text-ink/70">
-                One interface. Leak-free by construction. Sim only - it never trades real capital
-                and never asks for write or trade permissions.
+                Write the interface, or connect by chat via the MCP server. Leak-free by
+                construction. Sim only - it never trades real capital and never asks for write or
+                trade permissions.
               </p>
               <span className="inline-flex items-center gap-3.5 rounded-full border border-ink/28 px-6 py-4 font-mono text-[14px] tracking-[0.04em]">
                 <span className="text-ink/45">$</span>
