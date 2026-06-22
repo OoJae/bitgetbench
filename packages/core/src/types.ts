@@ -91,19 +91,34 @@ export interface Fill {
   slippageBps: number;
 }
 
+/** Forensic metadata for a decision sourced from a remote webhook. Not part of the hash. */
+export interface AgentResponseMeta {
+  /** The verbatim body the webhook returned, before parsing/clamping. */
+  raw: unknown;
+  /** Round-trip latency of the webhook call in ms. A soft signal of external IO. */
+  latencyMs: number;
+  /** HTTP status the webhook returned. */
+  httpStatus: number;
+}
+
 /**
  * One immutable journal entry per step, hash-chained.
- * hash = sha256(seq | prevHash | timestamp | decision | verdict | fill | equityAfter).
+ * hash = sha256(seq | prevHash | timestamp | contextHash | decision | verdict | fill | equityAfter).
+ * `contextHash` binds the recorded decision to the exact MarketContext that produced it.
  */
 export interface JournalEntry {
   seq: number;
   prevHash: string;
   timestamp: number;
+  /** sha256 of a stable fingerprint of the MarketContext the agent saw this step. */
+  contextHash: string;
   decision: AgentDecision;
   verdict: GuardRailVerdict;
   fill: Fill | null;
   equityAfter: number;
   hash: string;
+  /** Present only for remote-webhook agents; recorded for audit, not hashed. */
+  agentResponse?: AgentResponseMeta;
 }
 
 /** Performance and risk metrics computed from an equity curve and trade list. */
@@ -131,12 +146,33 @@ export interface ReturnDecomposition {
   skillReturn: number;
 }
 
+/**
+ * How much of the decision path the leak audit covers.
+ * - `engine`: the decision logic ran in-process, so leak-freedom is complete.
+ * - `fed-data-only`: the agent is external (a remote webhook); we certify only that the
+ *   data BitgetBench fed it was point-in-time, not what the agent fetched on its own.
+ */
+export type LeakScope = "engine" | "fed-data-only";
+
+/** What an agent's decision logic is and where it ran. */
+export type AgentKind = "local" | "strategy-spec" | "remote-webhook";
+
+/**
+ * Honest provenance label for a run on the board, derived from leak cleanliness + scope.
+ * - `engine-verified`: leak-clean, decision ran in our engine, fully re-runnable.
+ * - `data-clean`: leak-clean inputs, but an external agent we cannot fully verify.
+ * - `disqualified`: a look-ahead violation in the data we fed (scores 0).
+ */
+export type VerificationTier = "engine-verified" | "data-clean" | "disqualified";
+
 /** Evidence that a run never read future data. */
 export interface LeakCertificate {
   clean: boolean;
   maxLookaheadMs: number;
   checkedSteps: number;
   violations: number;
+  /** What the certificate covers. Defaults to `engine` for in-process agents. */
+  scope: LeakScope;
 }
 
 /** The full result of one backtest or sandbox run. */
@@ -157,6 +193,10 @@ export interface RunResult {
   journalRoot: string;
   /** Transparent composite ranking score (see packages/core/src/score.ts). */
   score: number;
+  /** What the agent is and where it ran. Defaults to `local` for reference agents. */
+  agentKind: AgentKind;
+  /** Honest provenance label for the board, derived from leak scope + cleanliness. */
+  verificationTier: VerificationTier;
 }
 
 // --- Engine (Phase 1) -------------------------------------------------------

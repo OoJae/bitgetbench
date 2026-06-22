@@ -6,7 +6,7 @@
 import type { BenchAgent, MarketContext, AgentDecision, RunResult, BacktestRun } from "./types.js";
 import { runBacktest, type RunBacktestParams } from "./engine.js";
 import { decomposeReturns } from "./decomposition.js";
-import { compositeScore } from "./score.js";
+import { compositeScore, deriveVerificationTier } from "./score.js";
 
 /** Internal buy-and-hold used as the benchmark baseline. Mirrors the reference agent. */
 class BenchmarkBuyAndHold implements BenchAgent {
@@ -37,7 +37,8 @@ export async function runBenchmarked(
 ): Promise<BenchmarkedResult> {
   const agentRun = await runBacktest(params);
   const benchmark = opts?.benchmark ?? new BenchmarkBuyAndHold();
-  const benchmarkRun = await runBacktest({ ...params, agent: benchmark });
+  // The benchmark is always our internal in-process buy-and-hold, so force agentKind local.
+  const benchmarkRun = await runBacktest({ ...params, agent: benchmark, agentKind: "local" });
 
   const decomposition = decomposeReturns(
     agentRun.equityCurve,
@@ -46,6 +47,7 @@ export async function runBenchmarked(
     benchmarkRun.metrics.totalReturn,
   );
   const score = compositeScore(agentRun.metrics, agentRun.leakCertificate);
+  const agentKind = params.agentKind ?? "local";
 
   const result: RunResult = {
     agent: agentRun.agent,
@@ -61,6 +63,8 @@ export async function runBenchmarked(
     leakCertificate: agentRun.leakCertificate,
     journalRoot: agentRun.journalRoot,
     score,
+    agentKind,
+    verificationTier: deriveVerificationTier(agentRun.leakCertificate, agentKind),
   };
 
   return { result, agentRun, benchmarkRun };

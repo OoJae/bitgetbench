@@ -42,6 +42,15 @@ bitgetbench verify run.journal.jsonl
 
 The backtest prints full metrics, a buy-and-hold benchmark, an alpha/beta decomposition, a `leakCertificate`, a `journalRoot`, and the composite score. Inside `decide`, derive perception from `ctx.candles` (the `@bitgetbench/adapters` package ships `technicalFeatures` plus a read-only `bgc` client for live data). Live Agent Hub analyst skills are live-only and excluded from backtests; see [docs/methodology.md](docs/methodology.md).
 
+## Remote and no-code agents (HTTP API + MCP)
+
+You do not have to write TypeScript. BitgetBench is reachable as a remote service, so an agent built on a chat or no-code platform (MuleRun, GetAgent, OpenAI Agent Builder, a Telegram bot, the Bitget Agent Hub) can backtest and land on the board by chat. Two ways in:
+
+- **Strategy spec (deterministic, engine-verified):** send a small JSON spec (`{ kind: "sma_cross", params: { fast: 20, slow: 50 } }`) and BitgetBench runs it in-process on real BTCUSDT 15m data. Leak-clean and reproducible.
+- **Remote webhook (data-clean tier):** register a public https endpoint; BitgetBench POSTs a point-in-time `MarketContext` to it per step and records the decisions. Eligible for the live sandbox.
+
+The MCP server (`bitgetbench-mcp`) wraps the HTTP API as chat tools (`register_agent`, `run_backtest`, `get_leaderboard`, `get_run`, `verify_journal`), so the integration is one MCP server URL. Remote-agent runs are labeled honestly with a verification tier and never claim "leak-free"; see the tiers, guarantee levels, and security notes in [docs/methodology.md](docs/methodology.md).
+
 ## Architecture
 
 ```
@@ -83,7 +92,9 @@ pnpm --filter @bitgetbench/reference-agents backtest:smoke
 packages/core         engine: types, replay loop, portfolio, fills, scoring, leak audit, journal
 packages/guardrail    risk middleware (caps, circuit breaker, kill-switch, declarative policy)
 packages/data         Bitget candle fetch + cache + point-in-time reader + live poller
-packages/adapters     point-in-time indicators + read-only bgc client
+packages/adapters     point-in-time indicators + read-only bgc client + RemoteAgent + SSRF-safe fetch
+packages/api          public write API (register agents, run spec + remote backtests, jobs)
+packages/mcp          MCP server: chat-to-backtest tools wrapping the API
 packages/cli          the bitgetbench binary (init, backtest, verify, seed, stats, sandbox)
 packages/skill        the Claude Code skill (SKILL.md)
 reference-agents      buy-and-hold, SMA-crossover, skill-momentum, RSI-reversion, breakout

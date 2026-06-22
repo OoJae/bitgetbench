@@ -6,6 +6,7 @@ import {
   initScaffold,
   runBacktestCommand,
   verifyCommand,
+  replayCommand,
   statsCommand,
   seedCommand,
   sandboxCommand,
@@ -90,13 +91,20 @@ program
 
 program
   .command("verify")
-  .description("Verify a journal JSONL file's hash chain")
+  .description("Verify a journal JSONL file's hash chain (and optionally replay it)")
   .argument("<journal>", "path to the journal JSONL file")
-  .action((journal: string) => {
+  .option("--replay", "also replay the recorded decisions through the engine", false)
+  .option("-c, --config <path>", "config to replay against (required with --replay)")
+  .action(async (journal: string, opts: { replay: boolean; config?: string }) => {
     try {
       const v = verifyCommand(journal);
-      console.log(JSON.stringify(v, null, 2));
-      if (!v.ok) process.exitCode = 1;
+      let replay: unknown;
+      if (opts.replay) {
+        if (!opts.config) throw new Error("--replay requires --config <path>");
+        replay = await replayCommand(journal, opts.config);
+      }
+      console.log(JSON.stringify({ ...v, ...(replay ? { replay } : {}) }, null, 2));
+      if (!v.ok || (replay && !(replay as { ok: boolean }).ok)) process.exitCode = 1;
     } catch (err) {
       console.error(JSON.stringify({ ok: false, error: (err as Error).message }));
       process.exitCode = 1;

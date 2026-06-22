@@ -1,0 +1,30 @@
+{
+  "name": "@bitgetbench/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "BitgetBench public write API: register agents, run spec + remote backtests, read the board",
+  "license": "MIT",
+  "bin": {
+    "bitgetbench-api": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@bitgetbench/core": "workspace:*",
+    "@bitgetbench/adapters": "workspace:*",
+    "@bitgetbench/data": "workspace:*",
+    "@bitgetbench/db": "workspace:*",
+    "@bitgetbench/reference-agents": "workspace:*"
+  }
+}

@@ -4,6 +4,34 @@ Running development log. Newest entries on top. One section per working turn: wh
 
 ---
 
+## 2026-06-22 - Remote / no-code agent integration (HTTP API + MCP)
+
+### Summary
+
+Made BitgetBench reachable as a remote service so agents built on no-code / chat platforms (MuleRun, GetAgent, Telegram, the Bitget Agent Hub) can backtest and appear on the board by chat. Two ways in: a deterministic strategy spec (engine-verified) and a remote decision webhook (data-clean tier). A remote agent is just a BenchAgent whose decide() POSTs over HTTP, so the engine, leak auditor, hash-chained journal, and guardrail are all reused unchanged.
+
+### What was done
+
+- Core trust primitives: LeakCertificate.scope (engine | fed-data-only), RunResult.verificationTier + agentKind, JournalEntry.contextHash (folded into the hash chain) + agentResponse metadata, deriveVerificationTier, replayFromJournal + `bitgetbench verify --replay`.
+- DB: verification_tier/agent_kind columns (+ idempotent ALTER migration), remote_agents registry, journals + jobs tables, submitRun helper, tier filter on topRuns.
+- adapters: strategySpec (validate/compile/hash, in reference-agents), RemoteAgent (timeout, retry, fail-safe hold, clamp, wall-clock deadline), safeFetch (SSRF-hardened: byte-level IPv6 parsing, DNS pin + timeout, no redirects, size cap).
+- packages/api (new): framework-free node:http write service on :3940 (register, backtest/spec sync, backtest/remote as a queued job, jobs, read mirror, verify) + token-bucket rate limit + auth.
+- packages/mcp (new): bitgetbench-mcp stdio server wrapping the API as chat tools (register_agent, run_backtest, get_leaderboard, get_run, verify_journal).
+- Live sandbox: registered agents run after the heartbeat, bounded (window + per-step + per-agent deadline + total budget), isolated, error-budget + circuit-breaker auto-disable.
+- Leaderboard UI: 3-tier badges (engine-verified / data-clean / disqualified), "engine-verified only" filter, data-clean disclaimer on run pages.
+- Deploy: bitgetbench-api systemd unit + nginx routing (write paths -> :3940 with limit_req + body cap, reads stay on :3939) + metadata-IP egress block. Docs: methodology tiers/guarantees/limitations, README remote+MCP section, demo MCP beat.
+
+### Adversarial review (workflow) + fixes
+
+Ran a 5-dimension adversarial review (34 agents). Fixed all HIGH/actionable findings: the IPv6 IPv4-mapped hex SSRF bypass (now byte-level parsing of mapped/compat/NAT64/6to4/Teredo), X-Forwarded-For rate-limit spoof (trust the rightmost hop + bind the API to 127.0.0.1) + bounded/evicting bucket map, error-to-status leak (typed HttpError only, generic 500), unbounded sandbox/remote run time (RemoteAgent wall-clock deadline), missing sandbox error budget (dead webhooks now trip the breaker), JobQueue crash-safety, constant-time API-key compare, DNS-resolution timeout, and a leak-scope allowlist so a future agent kind cannot inherit "engine" scope. The DB/trust LOW findings were confirmations of correctness.
+
+### Evidence
+
+- Gates green: typecheck, build, build:web, lint (no-em-dash), 132 tests, format. New tests: core trust (6), db registry (5), adapters safeFetch (6, incl. IPv6 bypass regression) + remoteAgent (4), reference-agents strategySpec (6), api server (9) + sandbox (2), mcp tools (6).
+- MCP stdio handshake lists all 5 tools. End-to-end (real cached data): a spec backtest lands engine-verified, a remote-webhook backtest lands data-clean, both on the board, bad spec returns 400, stats increment.
+
+---
+
 ## 2026-06-22 - Hotfix: chrome-mark halo on the landing
 
 The live landing showed a soft white halo around the chrome sphere that the brand reference does not have. Cause: the `ChromeBlob` mount div carried a `radial-gradient` background intended only as the no-WebGL fallback, but it painted behind the live transparent WebGL canvas too. Fix: clear the div background (`background: none`) the instant the WebGL canvas mounts, so the mark sits on pure void; the gradient now only shows for SSR / no-WebGL. Shipped to Vercel + VPS, both landings 200. (Client-side runtime change; visible on a browser hard-refresh.)

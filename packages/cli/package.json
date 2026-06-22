@@ -21,6 +21,7 @@
     "clean": "rm -rf dist *.tsbuildinfo"
   },
   "dependencies": {
+    "@bitgetbench/api": "workspace:*",
     "@bitgetbench/core": "workspace:*",
     "@bitgetbench/data": "workspace:*",
     "@bitgetbench/db": "workspace:*",

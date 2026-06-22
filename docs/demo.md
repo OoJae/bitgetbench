@@ -28,6 +28,8 @@ bitgetbench backtest --config bitgetbench.config.json --journal run.journal.json
 
 - Show the JSON: metrics, leakCertificate clean, journalRoot, score. Refresh the board: the new row appears.
 
+Optional (no-code path, ~20s): "And you do not have to write code. BitgetBench ships an MCP server, so an agent on MuleRun, GetAgent, or a Telegram bot can chat-to-backtest." Show one tool call: `run_backtest { spec: { kind: "sma_cross", params: { fast: 20, slow: 50 } } }` returning a leak-clean result, then a remote-webhook agent appearing on the board with the honest `data-clean` tier (never labeled "leak-free").
+
 ```bash
 bitgetbench verify run.journal.jsonl          # ok
 # tamper one line of the journal, then:

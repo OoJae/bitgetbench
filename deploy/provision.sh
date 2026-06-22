@@ -46,6 +46,22 @@ systemctl daemon-reload
 systemctl enable bitgetbench-web
 systemctl restart bitgetbench-web
 
+echo "== systemd write-api service =="
+chmod +x deploy/start-api.sh
+cp deploy/bitgetbench-api.service /etc/systemd/system/bitgetbench-api.service
+systemctl daemon-reload
+systemctl enable bitgetbench-api
+systemctl restart bitgetbench-api
+
+echo "== egress hardening (defense in depth; safeFetch also blocks these) =="
+# Block outbound to the cloud metadata IP, so a malicious registered webhook can never pivot
+# there even if the application guard were bypassed. Idempotent and best-effort.
+if command -v iptables >/dev/null 2>&1; then
+  iptables -C OUTPUT -d 169.254.169.254 -j REJECT 2>/dev/null \
+    || iptables -A OUTPUT -d 169.254.169.254 -j REJECT 2>/dev/null \
+    || true
+fi
+
 echo "== nginx reverse proxy =="
 sed "s/__BENCH_SERVER_NAME__/${BENCH_SERVER_NAME}/" deploy/nginx-bitgetbench.conf \
   > /etc/nginx/sites-available/bitgetbench

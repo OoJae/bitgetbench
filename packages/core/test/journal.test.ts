@@ -18,14 +18,16 @@ function buildJournal(): Journal {
   const j = new Journal();
   j.append(
     1000,
+    "ctx1",
     decision("long"),
     pass,
     { price: 100, sizeUsd: 10, feeUsd: 0.06, slippageBps: 0 },
     10_000,
   );
-  j.append(2000, decision("hold"), pass, null, 10_010);
+  j.append(2000, "ctx2", decision("hold"), pass, null, 10_010);
   j.append(
     3000,
+    "ctx3",
     decision("close"),
     pass,
     { price: 110, sizeUsd: 11, feeUsd: 0.066, slippageBps: 0 },
@@ -55,6 +57,14 @@ describe("Journal hash chain", () => {
     const entries: JournalEntry[] = buildJournal().entries.map((e) => ({ ...e }));
     entries[2] = { ...entries[2]!, hash: "deadbeef".repeat(8) };
     expect(verifyJournal(entries).ok).toBe(false);
+  });
+
+  it("binds the context: tampering with contextHash breaks the chain", () => {
+    const entries: JournalEntry[] = buildJournal().entries.map((e) => ({ ...e }));
+    entries[1] = { ...entries[1]!, contextHash: "tampered" };
+    const v = verifyJournal(entries);
+    expect(v.ok).toBe(false);
+    expect(v.brokenAt).toBe(1);
   });
 
   it("is empty-safe: an empty journal verifies and roots at genesis", () => {

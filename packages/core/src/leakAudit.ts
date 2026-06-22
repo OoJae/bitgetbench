@@ -6,6 +6,7 @@
 import type {
   Candle,
   LeakCertificate,
+  LeakScope,
   PointInTimeReader,
   PointInTimeQueryOptions,
 } from "./types.js";
@@ -29,13 +30,19 @@ export class LeakAuditor {
     if (lookahead > 0 || fillOpenTime <= decisionTs) this.violationsCount += 1;
   }
 
-  certificate(): LeakCertificate {
+  /**
+   * Build the certificate. `scope` records how much of the decision path is covered:
+   * `engine` for in-process agents (complete), `fed-data-only` for remote webhooks (we
+   * certify only the data we supplied, never what the external agent fetched itself).
+   */
+  certificate(scope: LeakScope = "engine"): LeakCertificate {
     const maxLookaheadMs = this.steps > 0 ? Math.max(0, this.worstLookaheadMs) : 0;
     return {
       clean: this.violationsCount === 0,
       maxLookaheadMs,
       checkedSteps: this.steps,
       violations: this.violationsCount,
+      scope,
     };
   }
 }

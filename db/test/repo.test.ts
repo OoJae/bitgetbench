@@ -41,9 +41,17 @@ function runResult(agent: string, score: number): RunResult {
     metrics: metrics(),
     benchmark: metrics({ totalReturn: 0.05 }),
     decomposition: { alpha: 0.001, beta: 0.9, marketReturn: 0.045, skillReturn: 0.055 },
-    leakCertificate: { clean: true, maxLookaheadMs: 0, checkedSteps: 100, violations: 0 },
+    leakCertificate: {
+      clean: true,
+      maxLookaheadMs: 0,
+      checkedSteps: 100,
+      violations: 0,
+      scope: "engine",
+    },
     journalRoot: "a".repeat(64),
     score,
+    agentKind: "local",
+    verificationTier: "engine-verified",
   };
 }
 

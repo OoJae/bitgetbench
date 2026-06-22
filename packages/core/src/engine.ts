@@ -12,11 +12,13 @@ import type {
   EquitySample,
   GuardRailVerdict,
   GuardRail,
+  AgentKind,
+  AgentResponseMeta,
 } from "./types.js";
 import { Portfolio } from "./portfolio.js";
 import { computeMetrics } from "./metrics.js";
 import { LeakAuditor } from "./leakAudit.js";
-import { Journal } from "./journal.js";
+import { Journal, sha256Hex, stableStringify } from "./journal.js";
 
 export interface RunBacktestParams {
   agent: BenchAgent;
@@ -30,6 +32,45 @@ export interface RunBacktestParams {
   config: EngineConfig;
   /** Optional risk middleware applied between the decision and the fill. */
   guardrail?: GuardRail;
+  /** What the agent is. Drives the leak-certificate scope. Defaults to `local`. */
+  agentKind?: AgentKind;
+}
+
+/**
+ * An agent that can report per-step forensic metadata (a remote webhook's raw response).
+ * Duck-typed so core stays decoupled from @bitgetbench/adapters; RemoteAgent implements it.
+ */
+export interface ResponseReportingAgent {
+  consumeLastResponse(): AgentResponseMeta | undefined;
+}
+
+function hasResponseReporting(agent: BenchAgent): agent is BenchAgent & ResponseReportingAgent {
+  return typeof (agent as Partial<ResponseReportingAgent>).consumeLastResponse === "function";
+}
+
+/**
+ * A compact, stable fingerprint of the context the agent saw, hashed into the journal so the
+ * recorded decision is cryptographically bound to its context. It commits to the decision
+ * time, the candle window bounds and last close, and the position/equity; the candle window
+ * itself is reproducible from the point-in-time reader given these parameters. Compact by
+ * design so hashing is O(1) per step rather than O(window) over a growing history.
+ */
+export function contextHashOf(ctx: MarketContext): string {
+  const first = ctx.candles[0];
+  const last = ctx.candles[ctx.candles.length - 1];
+  return sha256Hex(
+    stableStringify({
+      timestamp: ctx.timestamp,
+      symbol: ctx.symbol,
+      timeframe: ctx.timeframe,
+      n: ctx.candles.length,
+      firstOpenTime: first ? first.openTime : null,
+      lastOpenTime: last ? last.openTime : null,
+      lastClose: last ? last.close : null,
+      position: ctx.position,
+      equity: ctx.equity,
+    }),
+  );
 }
 
 function toPublicPosition(p: Portfolio): Position | null {
@@ -87,6 +128,7 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
     // Update guardrail state with the equity entering this step, then decide and screen.
     params.guardrail?.onStep(portfolio.equity(bar.close), decisionTs);
     const decision = await agent.decide(ctx);
+    const agentResponse = hasResponseReporting(agent) ? agent.consumeLastResponse() : undefined;
     const verdict: GuardRailVerdict = params.guardrail
       ? params.guardrail.apply(decision)
       : { allowed: decision, blocked: false, reasons: [] };
@@ -128,7 +170,15 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
 
     const equityAfter = portfolio.equity(fillBar.close);
     auditor.record(candles, decisionTs, fillBar.openTime);
-    journal.append(decisionTs, decision, verdict, portfolio.lastFill, equityAfter);
+    journal.append(
+      decisionTs,
+      contextHashOf(ctx),
+      decision,
+      verdict,
+      portfolio.lastFill,
+      equityAfter,
+      agentResponse,
+    );
 
     if (portfolio.hasPosition()) barsWithPosition += 1;
     equityCurve.push({ timestamp: fillBar.openTime, equity: equityAfter });
@@ -141,6 +191,14 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
   const exposure = barsWithPosition / (bars.length - 1);
   const metrics = computeMetrics(equityCurve, portfolio.trades, { stepMs, exposure });
   const endEquity = equityCurve[equityCurve.length - 1]!.equity;
+  // Allowlist, not denylist: only agents whose decision logic ran in our engine earn `engine`
+  // scope. Any external or unrecognized kind gets the weaker `fed-data-only` certificate, so a
+  // future AgentKind cannot silently inherit the full leak-free claim.
+  const inProcess =
+    params.agentKind === undefined ||
+    params.agentKind === "local" ||
+    params.agentKind === "strategy-spec";
+  const leakScope = inProcess ? "engine" : "fed-data-only";
 
   return {
     agent: agent.name,
@@ -153,7 +211,7 @@ export async function runBacktest(params: RunBacktestParams): Promise<BacktestRu
     metrics,
     equityCurve,
     trades: portfolio.trades,
-    leakCertificate: auditor.certificate(),
+    leakCertificate: auditor.certificate(leakScope),
     journal: [...journal.entries],
     journalRoot: journal.root,
   };

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { ChromeBlob } from "../components/ChromeBlob";
 import { Reveal } from "../components/brand/Reveal";
 import { Clock } from "../components/brand/Clock";
-import { SectionLabel } from "../components/brand/primitives";
+import { SectionLabel, TierTag } from "../components/brand/primitives";
 import { Ticker } from "../components/brand/Ticker";
 import { SparkLine } from "../components/brand/SparkLine";
 import { REPO_URL } from "../components/brand/Site";
@@ -247,7 +247,9 @@ export default async function Landing() {
                     {pct(r.totalReturn)}
                   </span>
                   <SparkLine points={r.equity} />
-                  <span className="text-right tracking-[0.1em]">{r.leakClean ? "✓" : "✗"}</span>
+                  <span className="flex justify-end text-right">
+                    <TierTag tier={r.verificationTier} compact />
+                  </span>
                 </Link>
               ))}
               <div className="mt-6 flex items-center justify-between">

@@ -4,7 +4,7 @@ import { runDetail } from "../../../lib/data";
 import { EquityChart, DrawdownChart } from "../../../components/Charts";
 import { Shell } from "../../../components/brand/Site";
 import { CornerTicks } from "../../../components/brand/CornerTicks";
-import { LeakTag } from "../../../components/brand/primitives";
+import { TierTag, KindTag } from "../../../components/brand/primitives";
 import { pct, num, usd, shortHash, fmtDate } from "../../../lib/format";
 
 export const revalidate = 60;
@@ -45,13 +45,22 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
             <span className="rounded-full border border-ink/20 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.12em] text-ink/55">
               {run.label}
             </span>
-            <LeakTag clean={run.leakClean} />
+            <TierTag tier={run.verificationTier} />
+            <KindTag kind={run.agentKind} />
             {run.mode === "sandbox" ? (
               <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/45">
                 live sandbox
               </span>
             ) : null}
           </div>
+          {run.verificationTier === "data-clean" ? (
+            <p className="mt-3 max-w-2xl border-l border-ink/20 pl-3 font-mono text-[11px] leading-5 text-ink/50">
+              BitgetBench fed this externally-hosted agent only point-in-time candles (every
+              openTime &lt;= the decision time). BitgetBench cannot observe or prevent data the
+              agent fetched on its own, so the leak guarantee covers BitgetBench-supplied data only.
+              Every decision is recorded in the journal, so the run is auditable and replayable.
+            </p>
+          ) : null}
           <p className="mt-2 font-mono text-[12px] tracking-[0.04em] text-ink/55">
             {run.symbol} - {run.timeframe} - {fmtDate(run.startTs)} to {fmtDate(run.endTs)} - start{" "}
             {usd(run.startEquity)} USDT

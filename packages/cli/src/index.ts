@@ -5,7 +5,14 @@ import { existsSync, writeFileSync, readFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join, isAbsolute } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { BenchAgent, EngineConfig, RunResult, BacktestRun } from "@bitgetbench/core";
-import { runBenchmarked, verifyJournal, type JournalEntry } from "@bitgetbench/core";
+import {
+  runBenchmarked,
+  verifyJournal,
+  replayFromJournal,
+  type JournalEntry,
+  type JournalReplay,
+} from "@bitgetbench/core";
+import { runRemoteSandboxPass, type RemoteSandboxOutcome } from "@bitgetbench/api";
 import {
   readerFromCache,
   readManifest,
@@ -254,6 +261,8 @@ export interface SandboxOutcome {
   rows: number;
   runs: Array<{ agent: string; runId: string; score: number; endEquity: number }>;
   latencyMs: number;
+  /** Registered external agents run this cycle, after the heartbeat. */
+  remote?: RemoteSandboxOutcome["ran"];
 }
 
 /**
@@ -296,7 +305,15 @@ export async function sandboxCommand(dbPath?: string): Promise<SandboxOutcome> {
     recordEvent(db, "sandbox_cycle", clientId, { appended: sync.appended });
     const latencyMs = Date.now() - t0;
     recordHeartbeat(db, true, latencyMs, `appended ${sync.appended}, rows ${sync.rows}`);
-    return { appended: sync.appended, rows: sync.rows, runs, latencyMs };
+    // After the heartbeat: a bounded, isolated pass over registered external agents. A slow or
+    // dead third-party webhook here can never affect the reference cycle or the heartbeat above.
+    let remote: RemoteSandboxOutcome["ran"] = [];
+    try {
+      remote = (await runRemoteSandboxPass(db, clientId)).ran;
+    } catch {
+      // Best effort: the cycle already succeeded; remote-agent failures must not surface.
+    }
+    return { appended: sync.appended, rows: sync.rows, runs, latencyMs, remote };
   } catch (err) {
     const latencyMs = Date.now() - t0;
     recordHeartbeat(db, false, latencyMs, (err as Error).message);
@@ -311,13 +328,55 @@ export interface VerifyOutcome {
   checked: number;
 }
 
-/** Verify a journal JSONL file's hash chain. */
-export function verifyCommand(journalPath: string): VerifyOutcome {
+function readJournalFile(journalPath: string): JournalEntry[] {
   const text = readFileSync(resolve(journalPath), "utf8");
-  const entries: JournalEntry[] = text
+  return text
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.length > 0)
     .map((l) => JSON.parse(l) as JournalEntry);
-  return verifyJournal(entries);
+}
+
+/** Verify a journal JSONL file's hash chain. */
+export function verifyCommand(journalPath: string): VerifyOutcome {
+  return verifyJournal(readJournalFile(journalPath));
+}
+
+/**
+ * Replay a journal's recorded decisions through the engine and confirm they reproduce the same
+ * journalRoot (engine fidelity). Needs the same config + cached data the run used. This proves a
+ * non-deterministic remote-agent run was executed faithfully, even though the agent cannot be
+ * re-called identically.
+ */
+export async function replayCommand(
+  journalPath: string,
+  configPath: string,
+): Promise<JournalReplay> {
+  const entries = readJournalFile(journalPath);
+  const absConfig = resolve(configPath);
+  const config = JSON.parse(readFileSync(absConfig, "utf8")) as BacktestConfig;
+  const key: CacheKey = {
+    market: config.market,
+    symbol: config.symbol,
+    timeframe: config.timeframe,
+  };
+  const manifest = config.cacheDir ? readManifest(key, config.cacheDir) : readManifest(key);
+  if (!manifest || manifest.firstOpenTime === null || manifest.lastOpenTime === null) {
+    throw new Error(`No cached candles for ${config.market}/${config.symbol}/${config.timeframe}.`);
+  }
+  const reader = config.cacheDir ? readerFromCache(key, config.cacheDir) : readerFromCache(key);
+  const engineConfig: EngineConfig = {
+    startEquity: config.startEquity,
+    fees: config.fees,
+    slippage: config.slippage,
+    ...(config.contextLookback !== undefined ? { contextLookback: config.contextLookback } : {}),
+  };
+  return replayFromJournal(entries, {
+    reader,
+    symbol: config.symbol,
+    timeframe: config.timeframe,
+    startTs: config.startTs ?? manifest.firstOpenTime,
+    endTs: config.endTs ?? manifest.lastOpenTime,
+    config: engineConfig,
+  });
 }

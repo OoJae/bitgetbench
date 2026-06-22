@@ -11,9 +11,13 @@ export type {
   GuardRail,
   Fill,
   JournalEntry,
+  AgentResponseMeta,
   Metrics,
   ReturnDecomposition,
   LeakCertificate,
+  LeakScope,
+  AgentKind,
+  VerificationTier,
   RunResult,
   PointInTimeReader,
   PointInTimeQueryOptions,
@@ -31,9 +35,16 @@ export { Portfolio } from "./portfolio.js";
 
 export { computeMetrics, stepReturns, maxDrawdown, type MetricsContext } from "./metrics.js";
 
-export { runBacktest, type RunBacktestParams } from "./engine.js";
+export {
+  runBacktest,
+  contextHashOf,
+  type RunBacktestParams,
+  type ResponseReportingAgent,
+} from "./engine.js";
 
 export { LeakAuditor, wrapReaderWithAudit } from "./leakAudit.js";
+
+export { replayFromJournal, type JournalReplay } from "./replayFromJournal.js";
 
 export {
   Journal,
@@ -46,7 +57,12 @@ export {
 
 export { regress, decomposeReturns } from "./decomposition.js";
 
-export { compositeScore, SCORE_WEIGHTS, SHARPE_SATURATION } from "./score.js";
+export {
+  compositeScore,
+  deriveVerificationTier,
+  SCORE_WEIGHTS,
+  SHARPE_SATURATION,
+} from "./score.js";
 
 export { walkForward, type WalkForwardFold, type WalkForwardResult } from "./walkForward.js";
 

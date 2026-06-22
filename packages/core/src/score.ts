@@ -2,7 +2,7 @@
 // Users can still sort by any raw metric. A run that is not leak-clean scores 0, so rigor
 // is a gate, not a tunable. The formula and weights are documented in docs/methodology.md.
 
-import type { Metrics, LeakCertificate } from "./types.js";
+import type { Metrics, LeakCertificate, AgentKind, VerificationTier } from "./types.js";
 
 /** Published weights. They sum to 1 across the three reward terms. */
 export const SCORE_WEIGHTS = {
@@ -32,4 +32,20 @@ export function compositeScore(metrics: Metrics, leak: LeakCertificate): number 
     SCORE_WEIGHTS.drawdown * drawdownTerm +
     SCORE_WEIGHTS.totalReturn * returnTerm
   );
+}
+
+/**
+ * Honest provenance label for a run, orthogonal to the score. The score gate already
+ * disqualifies leak-dirty fed data; the tier records how much of the agent we could verify:
+ * an in-process agent on leak-clean data is `engine-verified`; a remote webhook on leak-clean
+ * data we fed is `data-clean` (we cannot prove it did not fetch outside data); a run with a
+ * look-ahead violation in the data we fed is `disqualified`.
+ */
+export function deriveVerificationTier(
+  leak: LeakCertificate,
+  agentKind: AgentKind,
+): VerificationTier {
+  if (!leak.clean) return "disqualified";
+  if (agentKind === "remote-webhook" || leak.scope === "fed-data-only") return "data-clean";
+  return "engine-verified";
 }

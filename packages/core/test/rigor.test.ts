@@ -145,6 +145,7 @@ describe("compositeScore", () => {
     maxLookaheadMs: 0,
     checkedSteps: 10,
     violations: 0,
+    scope: "engine",
   };
   const baseMetrics: Metrics = {
     totalReturn: 0,
@@ -167,6 +168,7 @@ describe("compositeScore", () => {
       maxLookaheadMs: 5,
       checkedSteps: 10,
       violations: 1,
+      scope: "engine",
     };
     expect(compositeScore({ ...baseMetrics, sharpe: 3, totalReturn: 1 }, dirty)).toBe(0);
   });

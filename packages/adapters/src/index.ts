@@ -15,3 +15,14 @@ export {
 } from "./indicators.js";
 
 export { BitgetHubClient, type BgcResult, type BitgetHubClientOptions } from "./bitgetHub.js";
+
+export { RemoteAgent, type RemoteAgentOptions } from "./remoteAgent.js";
+
+export {
+  assertWebhookUrlAllowed,
+  safePostJson,
+  ipIsBlocked,
+  type PinnedTarget,
+  type SafePostResult,
+  type SafePostOptions,
+} from "./safeFetch.js";

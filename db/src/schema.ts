@@ -40,6 +40,10 @@ export interface RunRow {
   score: number;
   createdAt: number;
   clientId: string;
+  /** Honest provenance label: engine-verified | data-clean | disqualified. */
+  verificationTier: string;
+  /** What the agent is: local | strategy-spec | remote-webhook. */
+  agentKind: string;
 }
 
 export interface TradeRow {
@@ -62,6 +66,38 @@ export interface HeartbeatRow {
   ok: number;
   latencyMs: number;
   note: string | null;
+}
+
+/** A registered externally-hosted agent (a remote webhook, or a stored strategy spec). */
+export interface RemoteAgentRow {
+  id: string;
+  name: string;
+  /** 'remote-webhook' | 'strategy-spec'. */
+  kind: string;
+  webhookUrl: string | null;
+  specJson: string | null;
+  apiKeyHash: string;
+  clientId: string;
+  enabled: number; // 0 or 1
+  consecutiveFailures: number;
+  lastRunTs: number | null;
+  createdAt: number;
+}
+
+/** An async backtest job (used for remote-webhook runs, which are slow). */
+export interface JobRow {
+  id: string;
+  /** 'queued' | 'running' | 'done' | 'failed'. */
+  status: string;
+  /** 0..1 fraction of steps completed. */
+  progress: number;
+  kind: string;
+  payloadJson: string;
+  runId: string | null;
+  error: string | null;
+  clientId: string;
+  createdAt: number;
+  updatedAt: number;
 }
 
 export const DDL = `
@@ -102,7 +138,9 @@ CREATE TABLE IF NOT EXISTS runs (
   score REAL NOT NULL,
   equity_json TEXT NOT NULL,
   client_id TEXT NOT NULL,
-  created_at INTEGER NOT NULL
+  created_at INTEGER NOT NULL,
+  verification_tier TEXT NOT NULL DEFAULT 'engine-verified',
+  agent_kind TEXT NOT NULL DEFAULT 'local'
 );
 CREATE TABLE IF NOT EXISTS trades (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,7 +169,49 @@ CREATE TABLE IF NOT EXISTS heartbeats (
   latency_ms INTEGER NOT NULL,
   note TEXT
 );
+CREATE TABLE IF NOT EXISTS remote_agents (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  webhook_url TEXT,
+  spec_json TEXT,
+  api_key_hash TEXT NOT NULL,
+  client_id TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  consecutive_failures INTEGER NOT NULL DEFAULT 0,
+  last_run_ts INTEGER,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS journals (
+  run_id TEXT PRIMARY KEY,
+  jsonl TEXT NOT NULL,
+  created_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS jobs (
+  id TEXT PRIMARY KEY,
+  status TEXT NOT NULL,
+  progress REAL NOT NULL DEFAULT 0,
+  kind TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  run_id TEXT,
+  error TEXT,
+  client_id TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL
+);
 CREATE INDEX IF NOT EXISTS idx_trades_run ON trades(run_id);
 CREATE INDEX IF NOT EXISTS idx_runs_mode ON runs(mode);
 CREATE INDEX IF NOT EXISTS idx_events_type ON telemetry_events(type);
+CREATE INDEX IF NOT EXISTS idx_remote_enabled ON remote_agents(enabled);
+CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 `;
+
+/**
+ * Idempotent column additions for databases created before these columns existed.
+ * CREATE TABLE IF NOT EXISTS does not alter an existing table, so the live VPS DB needs
+ * these run explicitly. Each is a constant-default NOT NULL, which SQLite allows in ALTER.
+ */
+export const RUN_COLUMN_MIGRATIONS: Array<{ column: string; ddl: string }> = [
+  { column: "verification_tier", ddl: "verification_tier TEXT NOT NULL DEFAULT 'engine-verified'" },
+  { column: "agent_kind", ddl: "agent_kind TEXT NOT NULL DEFAULT 'local'" },
+];

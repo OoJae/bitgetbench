@@ -5,3 +5,12 @@ export { SmaCrossoverAgent, type SmaCrossoverConfig } from "./smaCrossover.js";
 export { SkillMomentumAgent, type SkillMomentumConfig } from "./skillMomentum.js";
 export { RsiReversionAgent, type RsiReversionConfig } from "./rsiReversion.js";
 export { BreakoutAgent, type BreakoutConfig } from "./breakout.js";
+export {
+  validateSpec,
+  specToAgent,
+  specHash,
+  STRATEGY_KINDS,
+  SPEC_LIMITS,
+  type StrategySpec,
+  type StrategyKind,
+} from "./strategySpec.js";

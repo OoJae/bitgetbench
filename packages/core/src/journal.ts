@@ -3,7 +3,13 @@
 // and verifyJournal recomputes the chain to detect tampering. Deterministic.
 
 import { createHash } from "node:crypto";
-import type { AgentDecision, GuardRailVerdict, Fill, JournalEntry } from "./types.js";
+import type {
+  AgentDecision,
+  GuardRailVerdict,
+  Fill,
+  JournalEntry,
+  AgentResponseMeta,
+} from "./types.js";
 
 /** The prevHash of the first entry. 64 hex zeros. */
 export const GENESIS_HASH = "0".repeat(64);
@@ -26,6 +32,7 @@ function preimage(
   seq: number,
   prevHash: string,
   timestamp: number,
+  contextHash: string,
   decision: AgentDecision,
   verdict: GuardRailVerdict,
   fill: Fill | null,
@@ -35,6 +42,7 @@ function preimage(
     seq,
     prevHash,
     timestamp,
+    contextHash,
     stableStringify(decision),
     stableStringify(verdict),
     stableStringify(fill),
@@ -57,25 +65,29 @@ export class Journal {
 
   append(
     timestamp: number,
+    contextHash: string,
     decision: AgentDecision,
     verdict: GuardRailVerdict,
     fill: Fill | null,
     equityAfter: number,
+    agentResponse?: AgentResponseMeta,
   ): JournalEntry {
     const seq = this.entriesArr.length;
     const prevHash = this.root;
     const hash = sha256Hex(
-      preimage(seq, prevHash, timestamp, decision, verdict, fill, equityAfter),
+      preimage(seq, prevHash, timestamp, contextHash, decision, verdict, fill, equityAfter),
     );
     const entry: JournalEntry = {
       seq,
       prevHash,
       timestamp,
+      contextHash,
       decision,
       verdict,
       fill,
       equityAfter,
       hash,
+      ...(agentResponse ? { agentResponse } : {}),
     };
     this.entriesArr.push(entry);
     return entry;
@@ -95,7 +107,16 @@ export function verifyJournal(entries: readonly JournalEntry[]): JournalVerifica
   for (let i = 0; i < entries.length; i += 1) {
     const e = entries[i]!;
     const expected = sha256Hex(
-      preimage(e.seq, prevHash, e.timestamp, e.decision, e.verdict, e.fill, e.equityAfter),
+      preimage(
+        e.seq,
+        prevHash,
+        e.timestamp,
+        e.contextHash,
+        e.decision,
+        e.verdict,
+        e.fill,
+        e.equityAfter,
+      ),
     );
     if (e.seq !== i || e.prevHash !== prevHash || e.hash !== expected) {
       return { ok: false, brokenAt: i, checked: entries.length };

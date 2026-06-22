@@ -5,6 +5,8 @@
     { "path": "./packages/data" },
     { "path": "./packages/guardrail" },
     { "path": "./packages/adapters" },
+    { "path": "./packages/api" },
+    { "path": "./packages/mcp" },
     { "path": "./packages/cli" },
     { "path": "./packages/skill" },
     { "path": "./reference-agents" },

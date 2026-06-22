@@ -6,7 +6,7 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { createRequire } from "node:module";
 import type * as NodeSqlite from "node:sqlite";
-import { DDL } from "./schema.js";
+import { DDL, RUN_COLUMN_MIGRATIONS } from "./schema.js";
 
 // node:sqlite is a very new builtin that some bundlers (Vite/Vitest) do not yet
 // auto-externalize. Loading it through createRequire avoids static-import resolution while
@@ -23,7 +23,17 @@ export function getDb(path: string): Db {
   db.exec("PRAGMA journal_mode = WAL;");
   db.exec("PRAGMA busy_timeout = 5000;");
   db.exec(DDL);
+  migrateRunColumns(db);
   return db;
+}
+
+/** Add columns to an existing `runs` table that predates them (idempotent). */
+function migrateRunColumns(db: Db): void {
+  const cols = db.prepare("PRAGMA table_info(runs)").all() as Array<{ name: string }>;
+  const have = new Set(cols.map((c) => c.name));
+  for (const { column, ddl } of RUN_COLUMN_MIGRATIONS) {
+    if (!have.has(column)) db.exec(`ALTER TABLE runs ADD COLUMN ${ddl}`);
+  }
 }
 
 /** Run `fn` inside a transaction, rolling back on error. */

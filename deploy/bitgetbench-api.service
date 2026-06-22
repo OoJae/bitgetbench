@@ -1,0 +1,14 @@
+[Unit]
+Description=BitgetBench write API (register agents, run spec + remote backtests)
+After=network.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/opt/bitgetbench/deploy/.env
+ExecStart=/opt/bitgetbench/deploy/start-api.sh
+Restart=always
+RestartSec=5
+User=root
+
+[Install]
+WantedBy=multi-user.target

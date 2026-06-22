@@ -3,13 +3,22 @@ import { listRuns, stats, heartbeat } from "../../lib/data";
 import { Shell } from "../../components/brand/Site";
 import { Ticker } from "../../components/brand/Ticker";
 import { SparkLine } from "../../components/brand/SparkLine";
-import { LiveDot, Kicker } from "../../components/brand/primitives";
+import { LiveDot, Kicker, TierTag, KindTag } from "../../components/brand/primitives";
 import { pct, num, fmtDate } from "../../lib/format";
 
 export const revalidate = 60;
 
-export default async function Leaderboard() {
-  const [runs, s, hb] = await Promise.all([listRuns(100), stats(), heartbeat()]);
+export default async function Leaderboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ tier?: string }>;
+}) {
+  const { tier } = await searchParams;
+  const engineOnly = tier === "engine-verified";
+  const [allRuns, s, hb] = await Promise.all([listRuns(100), stats(), heartbeat()]);
+  const runs = engineOnly
+    ? allRuns.filter((r) => r.verificationTier === "engine-verified")
+    : allRuns;
   const hbFresh = hb ? Date.now() - hb.ts < 30 * 60 * 1000 : false;
 
   return (
@@ -37,11 +46,25 @@ export default async function Leaderboard() {
           ]}
         />
 
-        <div className="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.13em] text-ink/50">
+        <div className="flex flex-wrap items-center justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.13em] text-ink/50">
           <LiveDot
             ok={hbFresh}
             label={hb ? `SANDBOX HEARTBEAT ${fmtDate(hb.ts)}` : "SANDBOX NOT STARTED"}
           />
+          <div className="flex items-center gap-4">
+            <Link
+              href="/leaderboard"
+              className={!engineOnly ? "text-ink" : "text-ink/45 hover:text-ink"}
+            >
+              ALL
+            </Link>
+            <Link
+              href="/leaderboard?tier=engine-verified"
+              className={engineOnly ? "text-ink" : "text-ink/45 hover:text-ink"}
+            >
+              ENGINE-VERIFIED ONLY
+            </Link>
+          </div>
         </div>
 
         <section className="overflow-x-auto font-mono">
@@ -54,7 +77,7 @@ export default async function Leaderboard() {
               <span>Sharpe</span>
               <span>Max DD</span>
               <span>Equity</span>
-              <span className="text-right">Leak</span>
+              <span className="text-right">Verify</span>
             </div>
             {runs.map((r, i) => (
               <Link
@@ -63,10 +86,11 @@ export default async function Leaderboard() {
                 className="grid grid-cols-[40px_1.6fr_0.7fr_0.8fr_0.8fr_0.9fr_0.7fr_0.6fr] items-center gap-4 border-b border-ink/10 py-3.5 text-[13px] hover:bg-carbon"
               >
                 <span className="text-ink/45">{String(i + 1).padStart(2, "0")}</span>
-                <span className="font-sans text-[15px] font-semibold">
+                <span className="flex items-center gap-2 font-sans text-[15px] font-semibold">
                   {r.agent}
+                  <KindTag kind={r.agentKind} />
                   {r.mode === "sandbox" ? (
-                    <span className="ml-2 align-middle text-[10px] uppercase tracking-[0.14em] text-ink/45">
+                    <span className="align-middle text-[10px] uppercase tracking-[0.14em] text-ink/45">
                       live
                     </span>
                   ) : null}
@@ -81,7 +105,9 @@ export default async function Leaderboard() {
                 <span className="text-ink/75">{num(r.sharpe)}</span>
                 <span className="text-ink/60">{pct(r.maxDrawdown)}</span>
                 <SparkLine points={r.equity} />
-                <span className="text-right tracking-[0.1em]">{r.leakClean ? "✓" : "✗"}</span>
+                <span className="flex justify-end text-right">
+                  <TierTag tier={r.verificationTier} compact />
+                </span>
               </Link>
             ))}
             {runs.length === 0 ? (

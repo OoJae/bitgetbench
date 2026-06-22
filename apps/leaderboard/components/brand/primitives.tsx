@@ -43,6 +43,52 @@ export function LeakTag({ clean }: { clean: boolean }) {
   );
 }
 
+// Verification tier badge. Honest provenance, never color:
+// - engine-verified: our engine ran the decision logic on leak-clean data (fully re-runnable)
+// - data-clean: we fed only point-in-time data, but the external agent is unverified
+// - disqualified: a look-ahead violation in the data we fed (scores 0)
+export function TierTag({
+  tier,
+  compact = false,
+}: {
+  tier: string | undefined;
+  compact?: boolean;
+}) {
+  const map: Record<string, { short: string; full: string; title: string }> = {
+    "engine-verified": {
+      short: "✓ ENGINE",
+      full: "✓ ENGINE-VERIFIED",
+      title: "Leak-clean and run in the BitgetBench engine. Fully re-runnable.",
+    },
+    "data-clean": {
+      short: "◷ DATA-CLEAN",
+      full: "◷ DATA POINT-IN-TIME / AGENT UNVERIFIED",
+      title:
+        "BitgetBench fed only point-in-time data. The agent is externally hosted and cannot be fully verified.",
+    },
+    disqualified: {
+      short: "✗ LEAK",
+      full: "✗ LEAK DETECTED",
+      title: "A look-ahead violation in the data we fed. This run scores 0.",
+    },
+  };
+  const m = map[tier ?? "engine-verified"] ?? map["engine-verified"]!;
+  return (
+    <span className="font-mono text-[11px] tracking-[0.1em] text-ink/70" title={m.title}>
+      {compact ? m.short : m.full}
+    </span>
+  );
+}
+
+// Small mono tag for the agent kind (local / strategy-spec / remote-webhook).
+export function KindTag({ kind }: { kind: string | undefined }) {
+  if (!kind || kind === "local") return null;
+  const label = kind === "remote-webhook" ? "remote" : "spec";
+  return (
+    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-ink/40">{label}</span>
+  );
+}
+
 // A command shown verbatim in a pill with a dim prompt glyph.
 export function CodeChip({ command, className = "" }: { command: string; className?: string }) {
   return (
