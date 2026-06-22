@@ -1,0 +1,221 @@
+{
+  "run_backtest_spec": {
+    "endpoint": "POST /api/backtest/spec",
+    "request": {
+      "spec": {
+        "kind": "sma_cross",
+        "params": {
+          "fast": 20,
+          "slow": 50
+        }
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "runId": "spec:71755126755ab25c1624c6948e331001",
+        "result": {
+          "agent": "sma-20-50",
+          "symbol": "BTCUSDT",
+          "timeframe": "15m",
+          "startTs": 1765304100000,
+          "endTs": 1781087400000,
+          "startEquity": 10000,
+          "endEquity": 6199.93234079832,
+          "metrics": {
+            "totalReturn": -0.380006765920168,
+            "cagr": -0.615503592869171,
+            "sharpe": -2.8746960818964205,
+            "sortino": -4.094391940701589,
+            "maxDrawdown": 0.38448667384277363,
+            "calmar": -1.6008450610719114,
+            "winRate": 0.2535211267605634,
+            "profitFactor": 0.5805431091412434,
+            "expectancy": -17.84069323568869,
+            "volatility": 0.3152207847895342,
+            "trades": 213,
+            "exposure": 0.4847465358955352
+          },
+          "benchmark": {
+            "totalReturn": -0.3490977431080895,
+            "cagr": -0.576222502187911,
+            "sharpe": -1.5414512763430184,
+            "sortino": -2.158240561985867,
+            "maxDrawdown": 0.3920273137459765,
+            "calmar": -1.4698529464232388,
+            "winRate": 0,
+            "profitFactor": 0,
+            "expectancy": -3490.9774310808953,
+            "volatility": 0.48169688275110195,
+            "trades": 1,
+            "exposure": 1
+          },
+          "decomposition": {
+            "alpha": -0.000016801621047612172,
+            "beta": 0.4269719509617797,
+            "marketReturn": -0.14905494445121514,
+            "skillReturn": -0.23095182146895288
+          },
+          "leakCertificate": {
+            "clean": true,
+            "maxLookaheadMs": 0,
+            "checkedSteps": 17537,
+            "violations": 0,
+            "scope": "engine"
+          },
+          "journalRoot": "3cf646fe671596f8f3dede8b133a5f176a28325747a3556673c6344711deb932",
+          "score": -0.37046336898626914,
+          "agentKind": "strategy-spec",
+          "verificationTier": "engine-verified"
+        }
+      }
+    }
+  },
+  "register_agent": {
+    "endpoint": "POST /api/agents",
+    "request": {
+      "name": "demo-webhook-agent",
+      "kind": "remote-webhook",
+      "webhookUrl": "http://127.0.0.1:3978/decide",
+      "attestNoOutsideData": true
+    },
+    "response": {
+      "status": 201,
+      "body": {
+        "agentId": "23178389-006b-479c-a9db-84d006719f54",
+        "apiKey": "bbk_REDACTED",
+        "name": "demo-webhook-agent",
+        "kind": "remote-webhook"
+      }
+    }
+  },
+  "run_backtest_remote": {
+    "endpoint": "POST /api/backtest/remote",
+    "request": {
+      "agentId": "23178389-006b-479c-a9db-84d006719f54",
+      "header x-api-key": "bbk_REDACTED"
+    },
+    "response": {
+      "status": 202,
+      "body": {
+        "jobId": "job_1ad69d04-b408-4669-8d93-f5cdb2789a2d",
+        "runId": "remote:23178389-006b-479c-a9db-84d006719f54",
+        "status": "queued"
+      }
+    }
+  },
+  "poll_job": {
+    "endpoint": "GET /api/jobs/:id",
+    "response": {
+      "status": 200,
+      "body": {
+        "id": "job_1ad69d04-b408-4669-8d93-f5cdb2789a2d",
+        "status": "done",
+        "progress": 1,
+        "runId": "remote:23178389-006b-479c-a9db-84d006719f54",
+        "error": null
+      }
+    }
+  },
+  "get_run_remote": {
+    "endpoint": "GET /api/run/:id",
+    "response": {
+      "status": 200,
+      "body": {
+        "run": {
+          "id": "remote:23178389-006b-479c-a9db-84d006719f54",
+          "agent": "demo-webhook-agent",
+          "label": "external",
+          "symbol": "BTCUSDT",
+          "timeframe": "15m",
+          "market": "usdt-futures",
+          "mode": "backtest",
+          "startTs": 1780727400000,
+          "endTs": 1781087400000,
+          "startEquity": 10000,
+          "endEquity": 10015.37433813018,
+          "totalReturn": 0.0015374338130178522,
+          "cagr": 0.14415680746032322,
+          "sharpe": 0.6198218391589019,
+          "sortino": 0.958804963682548,
+          "maxDrawdown": 0.025384443584336648,
+          "calmar": 5.678942970775791,
+          "winRate": 1,
+          "profitFactor": null,
+          "expectancy": 15.37433813017961,
+          "volatility": 0.2803963115136936,
+          "trades": 1,
+          "exposure": 0.995,
+          "alpha": -0.000006978327011534386,
+          "beta": 0.5013062547995945,
+          "marketReturn": 0.003906915022941427,
+          "skillReturn": -0.0023694812099235747,
+          "maxLookaheadMs": 0,
+          "checkedSteps": 400,
+          "violations": 0,
+          "journalRoot": "cbd44c902a62a0bdbbaa8782f7f4329cecf691db0ca9263fc374dcbb9773439d",
+          "score": 0.39599579354711956,
+          "createdAt": 1782170228285,
+          "clientId": "key:c4d9c1bc2936e26a",
+          "verificationTier": "data-clean",
+          "agentKind": "remote-webhook",
+          "leakClean": true,
+          "equity": [
+            {
+              "t": 1780727400000,
+              "e": 10000
+            },
+            {
+              "t": 1780728300000,
+              "e": 10000
+            },
+            {
+              "t": 1780729200000,
+              "e": 10000
+            },
+            "...",
+            {
+              "t": 1781086500000,
+              "e": 10017.200353858658
+            },
+            {
+              "t": 1781087400000,
+              "e": 10015.37433813018
+            }
+          ],
+          "benchmark": {
+            "totalReturn": 0.007793469531919728,
+            "cagr": 0.9749185096340942,
+            "sharpe": 1.4978228621602498,
+            "sortino": 2.333430037863587,
+            "maxDrawdown": 0.04955768607697483,
+            "calmar": 19.672397700728293,
+            "winRate": 1,
+            "profitFactor": null,
+            "expectancy": 77.93469531919864,
+            "volatility": 0.5573334233077458,
+            "trades": 1,
+            "exposure": 1
+          }
+        },
+        "trades": 1
+      }
+    }
+  },
+  "api_stats": {
+    "endpoint": "GET /api/stats",
+    "response": {
+      "status": 200,
+      "body": {
+        "agentsRegistered": 2,
+        "backtestsRun": 4,
+        "sandboxCycles": 0,
+        "simTrades": 0,
+        "apiCalls": 1,
+        "distinctUsers": 2,
+        "leaderboardSize": 2,
+        "sandboxHeartbeat": null
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "agentsRegistered": 6,
+  "backtestsRun": 10,
+  "sandboxCycles": 1190,
+  "simTrades": 1851,
+  "apiCalls": 0,
+  "distinctUsers": 2,
+  "leaderboardSize": 11,
+  "sandboxHeartbeat": {
+    "ts": 1782170105948,
+    "ok": true,
+    "latencyMs": 4058
+  }
+}

@@ -1,0 +1,16 @@
+# Journal verification (tamper-evidence proof)
+
+$ bitgetbench verify evidence/sample-backtest.journal.jsonl
+{
+  "ok": true,
+  "brokenAt": null,
+  "checked": 500
+}
+
+# Now tamper with one entry (change an equityAfter), then re-verify:
+$ bitgetbench verify /tmp/tampered.journal.jsonl
+{
+  "ok": false,
+  "brokenAt": 250,
+  "checked": 500
+}

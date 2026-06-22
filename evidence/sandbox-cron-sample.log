@@ -1,0 +1,40 @@
+# One unattended sandbox cron cycle (raw stdout, paths/IPs sanitized)
+{
+  "ok": true,
+  "appended": 1,
+  "rows": 18740,
+  "runs": [
+    {
+      "agent": "buy-and-hold",
+      "runId": "sandbox:buy-and-hold:BTCUSDT:15m",
+      "score": -0.09614850454278444,
+      "endEquity": 6784.957714002807
+    },
+    {
+      "agent": "sma-20-50",
+      "runId": "sandbox:sma-20-50:BTCUSDT:15m",
+      "score": -0.41061608677741074,
+      "endEquity": 5864.93238942209
+    },
+    {
+      "agent": "skill-momentum",
+      "runId": "sandbox:skill-momentum:BTCUSDT:15m",
+      "score": -0.603643329878411,
+      "endEquity": 1950.5934039663357
+    },
+    {
+      "agent": "rsi-reversion-14",
+      "runId": "sandbox:rsi-reversion-14:BTCUSDT:15m",
+      "score": -0.32515626322942254,
+      "endEquity": 7703.226965640156
+    },
+    {
+      "agent": "breakout-20",
+      "runId": "sandbox:breakout-20:BTCUSDT:15m",
+      "score": -0.3552514994853254,
+      "endEquity": 6935.72951531772
+    }
+  ],
+  "latencyMs": 4058,
+  "remote": []
+}

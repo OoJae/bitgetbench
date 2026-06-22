@@ -1,0 +1,54 @@
+{
+  "agent": "sma-20-50",
+  "symbol": "BTCUSDT",
+  "timeframe": "15m",
+  "startTs": 1780637400000,
+  "endTs": 1781087400000,
+  "startEquity": 10000,
+  "endEquity": 9753.244267900374,
+  "metrics": {
+    "totalReturn": -0.02467557320996261,
+    "cagr": -0.8266003700148726,
+    "sharpe": -5.072216017743625,
+    "sortino": -6.831389229178402,
+    "maxDrawdown": 0.03112606212528529,
+    "calmar": -26.556535378221938,
+    "winRate": 0.5,
+    "profitFactor": 0.406468474061134,
+    "expectancy": -30.844466512453305,
+    "volatility": 0.3344202037400266,
+    "trades": 8,
+    "exposure": 0.42
+  },
+  "benchmark": {
+    "totalReturn": -0.025814673551200373,
+    "cagr": -0.8402440702694141,
+    "sharpe": -2.4438705481558882,
+    "sortino": -3.6370927795693517,
+    "maxDrawdown": 0.05903320773243771,
+    "calmar": -14.233413743629498,
+    "winRate": 0,
+    "profitFactor": 0,
+    "expectancy": -258.1467355120039,
+    "volatility": 0.6613800267344677,
+    "trades": 1,
+    "exposure": 1
+  },
+  "decomposition": {
+    "alpha": -0.00003665837874724646,
+    "beta": 0.25419489920562754,
+    "marketReturn": -0.0065619583413735584,
+    "skillReturn": -0.01811361486858905
+  },
+  "leakCertificate": {
+    "clean": true,
+    "maxLookaheadMs": 0,
+    "checkedSteps": 500,
+    "violations": 0,
+    "scope": "engine"
+  },
+  "journalRoot": "3118d36fbddbe2e7fcf0b34a1f672882b81df01d00ad33b9ad56fdccb5c6350f",
+  "score": -0.21427293327957814,
+  "agentKind": "strategy-spec",
+  "verificationTier": "engine-verified"
+}
